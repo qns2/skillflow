@@ -158,6 +158,22 @@ Wait for human approval before proceeding.
 Follow the approved plan. Work in small committed steps.
 Ask before making decisions not covered by the plan.
 
+### Checkpoint: Skill Compliance
+Before proceeding to review, self-evaluate against each fetched skill:
+
+| Skill | Required Procedure | Followed? | Evidence |
+|---|---|---|---|
+| (each fetched skill) | (what it required) | Yes/No | (what you actually did — point to specific output) |
+
+Rules:
+- Every "No" must either be fixed before proceeding, or explicitly
+  approved by the human as intentionally skipped.
+- "Evidence" must point to concrete output (a file, a section, a specific
+  action taken) — not just "I did it."
+- If more than half the skills show "No", go back to step 4.
+
+Present this table to the human before proceeding to review.
+
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
 
@@ -380,6 +396,22 @@ Wait for human approval before proceeding.
 ### 4. Implement
 Follow the approved plan. Work in small committed steps.
 Ask before making decisions not covered by the plan.
+
+### Checkpoint: Skill Compliance
+Before proceeding to review, self-evaluate against each fetched skill:
+
+| Skill | Required Procedure | Followed? | Evidence |
+|---|---|---|---|
+| (each fetched skill) | (what it required) | Yes/No | (what you actually did — point to specific output) |
+
+Rules:
+- Every "No" must either be fixed before proceeding, or explicitly
+  approved by the human as intentionally skipped.
+- "Evidence" must point to concrete output (a file, a section, a specific
+  action taken) — not just "I did it."
+- If more than half the skills show "No", go back to step 4.
+
+Present this table to the human before proceeding to review.
 
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
