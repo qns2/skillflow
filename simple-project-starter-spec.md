@@ -90,11 +90,11 @@ Before doing anything else:
    appear that are not in the catalog, add them. If listed skills are gone,
    remove them. Tell the human what changed (if anything).
 
-2. **Fetch the brainstorming skill.** Check whether .agents/skills/brainstorming/SKILL.md exists.
-   If it does not exist, run:
+2. **Fetch or refresh the brainstorming skill.** Run:
    ```bash
-   bash .agents/fetch-skill.sh brainstorming obra/superpowers
+   bash .agents/fetch-skill.sh brainstorming obra/superpowers --refresh
    ```
+   This installs the skill if missing, or checks for upstream updates if already installed.
 
 Do not proceed until both steps are complete.
 
@@ -107,11 +107,11 @@ the direction.
 First, auto-fetch the required skills for any code task:
 
 ```bash
-bash .agents/fetch-skill.sh writing-plans obra/superpowers
-bash .agents/fetch-skill.sh test-driven-development obra/superpowers
-bash .agents/fetch-skill.sh requesting-code-review obra/superpowers
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers
-bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill
+bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
+bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
+bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
+bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
 ```
 
 Then consult .agents/skill-catalog.md for any additional skills needed
@@ -294,11 +294,11 @@ Before doing anything else:
    appear that are not in the catalog, add them. If listed skills are gone,
    remove them. Tell the human what changed (if anything).
 
-2. **Fetch the brainstorming skill.** Check whether .agents/skills/brainstorming/SKILL.md exists.
-   If it does not exist, run:
+2. **Fetch or refresh the brainstorming skill.** Run:
    ```bash
-   bash .agents/fetch-skill.sh brainstorming obra/superpowers
+   bash .agents/fetch-skill.sh brainstorming obra/superpowers --refresh
    ```
+   This installs the skill if missing, or checks for upstream updates if already installed.
 
 Do not proceed until both steps are complete.
 
@@ -311,11 +311,11 @@ the direction.
 First, auto-fetch the required skills for any code task:
 
 ```bash
-bash .agents/fetch-skill.sh writing-plans obra/superpowers
-bash .agents/fetch-skill.sh test-driven-development obra/superpowers
-bash .agents/fetch-skill.sh requesting-code-review obra/superpowers
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers
-bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill
+bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
+bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
+bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
+bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
 ```
 
 Then consult .agents/skill-catalog.md for any additional skills needed

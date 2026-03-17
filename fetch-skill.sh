@@ -3,10 +3,23 @@ set -euo pipefail
 
 # Usage:
 #   bash .agents/fetch-skill.sh <skill-name>
-#   bash .agents/fetch-skill.sh <skill-name> <org/repo>   # search specific repo only
+#   bash .agents/fetch-skill.sh <skill-name> <org/repo>
+#   bash .agents/fetch-skill.sh <skill-name> <org/repo> --refresh   # check for updates
 
 SKILL_NAME="${1:-}"
 SPECIFIC_REPO="${2:-}"
+REFRESH=0
+
+# Parse --refresh flag (can be 2nd or 3rd arg)
+for arg in "$@"; do
+  if [[ "$arg" == "--refresh" ]]; then
+    REFRESH=1
+    # Clear SPECIFIC_REPO if --refresh was passed as 2nd arg
+    if [[ "$SPECIFIC_REPO" == "--refresh" ]]; then
+      SPECIFIC_REPO=""
+    fi
+  fi
+done
 
 if [[ -z "$SKILL_NAME" ]]; then
   echo "Error: skill name required" && exit 1
@@ -14,12 +27,62 @@ fi
 
 SKILL_DIR=".agents/skills/$SKILL_NAME"
 SKILL_FILE="$SKILL_DIR/SKILL.md"
+SHA_FILE="$SKILL_DIR/.sha"
 
+# ── Already installed — check for updates if --refresh ────────────────────────
 if [[ -f "$SKILL_FILE" ]]; then
-  echo "✓ $SKILL_NAME already installed, skipping"
-  exit 0
+  if [[ "$REFRESH" -eq 0 ]]; then
+    echo "✓ $SKILL_NAME already installed, skipping"
+    exit 0
+  fi
+
+  # --refresh: check if upstream has changed
+  LOCAL_SHA=$(cat "$SHA_FILE" 2>/dev/null || echo "")
+  if [[ -z "$LOCAL_SHA" ]]; then
+    echo "→ $SKILL_NAME: no local hash, will re-fetch"
+  else
+    # Find the skill in repos to compare SHA
+    REPOS_CHECK=("anthropics/skills" "obra/superpowers")
+    if [[ -n "$SPECIFIC_REPO" ]]; then
+      REPOS_CHECK=("$SPECIFIC_REPO")
+    fi
+
+    for REPO in "${REPOS_CHECK[@]}"; do
+      for SKILL_PATH in \
+        "skills/$SKILL_NAME/SKILL.md" \
+        "$SKILL_NAME/SKILL.md" \
+        "SKILL.md" \
+        "skills/$SKILL_NAME/skill.md" \
+        "$SKILL_NAME/skill.md" \
+        "skill.md"
+      do
+        REMOTE_SHA=""
+        if REMOTE_SHA=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
+          --jq '.sha' 2>/dev/null); then
+          :
+        else
+          REMOTE_SHA=""
+        fi
+
+        if [[ -n "$REMOTE_SHA" && "$REMOTE_SHA" != "null" && "$REMOTE_SHA" != *"Not Found"* ]]; then
+          if [[ "$REMOTE_SHA" == "$LOCAL_SHA" ]]; then
+            echo "✓ $SKILL_NAME is up to date"
+            exit 0
+          else
+            echo "↻ $SKILL_NAME has been updated upstream, re-fetching..."
+            rm -f "$SKILL_FILE" "$SHA_FILE"
+            break 2
+          fi
+        fi
+      done
+    done
+  fi
+
+  # If we get here with --refresh, the skill needs re-fetching
+  # Fall through to the normal fetch logic below
 fi
 
+# ── Fetch skill ───────────────────────────────────────────────────────────────
 REPOS=(
   "anthropics/skills"
   "obra/superpowers"
@@ -52,9 +115,15 @@ for REPO in "${REPOS[@]}"; do
 
     if [[ -n "$DOWNLOAD_URL" && "$DOWNLOAD_URL" != "null" && "$DOWNLOAD_URL" != *"Not Found"* ]]; then
       mkdir -p "$SKILL_DIR"
-      gh api "repos/$REPO/contents/$SKILL_PATH" \
-        --jq '.content' \
-        | base64 --decode > "$SKILL_FILE"
+
+      # Fetch content and SHA together
+      RESPONSE=$(gh api "repos/$REPO/contents/$SKILL_PATH" 2>/dev/null || echo "")
+      if [[ -z "$RESPONSE" ]]; then
+        continue
+      fi
+
+      echo "$RESPONSE" | jq -r '.content' | base64 --decode > "$SKILL_FILE"
+      echo "$RESPONSE" | jq -r '.sha' > "$SHA_FILE"
 
       if [[ -s "$SKILL_FILE" ]]; then
         # ── Safety scan ──────────────────────────────────────────────
@@ -113,7 +182,7 @@ for REPO in "${REPOS[@]}"; do
         FOUND=1
         break 2
       else
-        rm -f "$SKILL_FILE"
+        rm -f "$SKILL_FILE" "$SHA_FILE"
       fi
     fi
   done
