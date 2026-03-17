@@ -134,16 +134,16 @@ Each super-skill is a standalone repo with SKILL.md at root. Fetch with:
 
 | Skill | Repo | Description |
 |---|---|---|
-| **dev-engineering-super-skill** | get-zeked/dev-engineering-super-skill | **REQUIRED.** Comprehensive full-stack development reference: architecture, frontend, backend, TDD, debugging, code review, DevOps, security. |
-| ai-agent-super-skill | get-zeked/ai-agent-super-skill | AI/ML agent building |
-| marketing-super-skill | get-zeked/marketing-super-skill | Marketing & growth |
-| sales-super-skill | get-zeked/sales-super-skill | Sales & revenue |
-| finance-super-skill | get-zeked/finance-super-skill | Finance & accounting |
-| legal-super-skill | get-zeked/legal-super-skill | Legal operations |
-| pm-super-skill | get-zeked/pm-super-skill | Product management & UX |
-| operations-cx-super-skill | get-zeked/operations-cx-super-skill | Operations & customer experience |
-| research-knowledge-super-skill | get-zeked/research-knowledge-super-skill | Research & data |
-| content-creative-super-skill | get-zeked/content-creative-super-skill | Creative studio |
+| **dev-engineering-super-skill** | get-zeked/dev-engineering-super-skill | **REQUIRED.** Architecture, frontend, backend, fullstack, QA/testing, DevOps, CI/CD, code review, security, debugging, TDD. |
+| ai-agent-super-skill | get-zeked/ai-agent-super-skill | Agent architecture (ReAct, Plan-Execute), MCP servers, RAG pipelines, subagent coordination, prompt engineering. |
+| marketing-super-skill | get-zeked/marketing-super-skill | Content creation, SEO, campaign planning, demand gen, analytics, competitive intelligence, PMM, ASO. |
+| sales-super-skill | get-zeked/sales-super-skill | Prospecting, outreach sequences, objection handling, pipeline management, customer interviews, RICE prioritization. |
+| finance-super-skill | get-zeked/finance-super-skill | Financial statements, month-end close, audit prep, investment research, ML forecasting, data engineering. |
+| legal-super-skill | get-zeked/legal-super-skill | Contract review & redlining, NDA triage, compliance (GDPR/CCPA), risk assessment, legal writing. |
+| pm-super-skill | get-zeked/pm-super-skill | Feature specs/PRDs, roadmap prioritization (RICE/MoSCoW), sprint/agile ops, metrics/OKRs, UX research, design systems. |
+| operations-cx-super-skill | get-zeked/operations-cx-super-skill | Ticket triage, customer responses, escalation workflows, KB management, sprint ops, quality verification. |
+| research-knowledge-super-skill | get-zeked/research-knowledge-super-skill | Deep research workflows, knowledge graphs, content extraction, data exploration, statistical analysis, visualization. |
+| content-creative-super-skill | get-zeked/content-creative-super-skill | Video, speech, image generation, web building, canvas design, algorithmic art, brand guidelines, frontend design. |
 
 ---
 
