@@ -44,7 +44,7 @@ Tell Claude Code what you want to build. It handles the rest.
 
 1. **Boot** — refreshes the skill catalog from upstream, fetches brainstorming skill
 2. **Brainstorm** — shapes your idea before any code
-3. **Identify and fetch skills** — pulls in skills from upstream as needed
+3. **Identify and fetch skills** — auto-fetches required skills (writing-plans, TDD, code review, verification, dev-engineering), plus any task-specific ones
 4. **Plan** — writes docs/plan.md, waits for your approval
 5. **Implement** — follows the plan
 6. **Review** — fixes obvious bugs, flags the rest for you
@@ -58,5 +58,32 @@ Skills are fetched on demand from:
 
 - https://github.com/anthropics/skills
 - https://github.com/obra/superpowers
+- https://github.com/get-zeked (standalone skill repos)
 
 See the Skill Catalog in `simple-project-starter-spec.md` for all available skills.
+
+---
+
+## Skill safety scanning
+
+Every skill downloaded by `fetch-skill.sh` is automatically scanned before installation. The scanner checks for:
+
+- **Network exfiltration** — `curl`/`wget`/`nc` commands targeting non-standard URLs
+- **Credential access** — patterns that read or transmit `.env`, SSH keys, API keys, or secrets
+- **Destructive operations** — `rm -rf` with broad paths, `shred`
+- **Data exfiltration** — base64 encoding combined with network send
+- **Safety bypass** — instructions to skip code reviews, disable safety checks, or use `--no-verify`
+- **Code injection** — `eval`/`exec` calls
+
+If warnings are found, the skill is still saved to disk but the scanner prints the warnings and asks you to review the content before proceeding. To remove a flagged skill: `rm -r .agents/skills/<skill-name>`.
+
+### Disclaimer
+
+**This scanner is a best-effort heuristic, not a security guarantee.** It uses pattern matching to flag common indicators of malicious intent. It cannot detect:
+
+- Obfuscated or encoded payloads
+- Indirect exfiltration via legitimate-looking API calls
+- Prompt injection techniques embedded in skill instructions
+- Novel attack patterns not covered by the current rule set
+
+**You are responsible for reviewing the skills you install.** Only fetch skills from repos you trust. The three default sources (anthropics/skills, obra/superpowers, get-zeked) are community-maintained open-source projects — review their contents and reputation before relying on them. If you add custom skill sources, vet them carefully.

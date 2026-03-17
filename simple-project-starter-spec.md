@@ -127,23 +127,23 @@ gh api repos/obra/superpowers/git/trees/HEAD:skills --jq '.tree[].path'
 | webapp-testing | anthropics/skills | Test local web apps with Playwright. Screenshots, browser logs, UI verification. |
 | skill-creator | anthropics/skills | Create and measure skill performance. Evals, benchmarking, description optimization. |
 
-### Cross-Domain — get-zeked/perplexity-super-skills
+### Cross-Domain — get-zeked (standalone repos)
 
-These are index repos linking to standalone super-skill files. Each combines
-Perplexity Computer with Claude Code capabilities.
+Each super-skill is a standalone repo with SKILL.md at root. Fetch with:
+`bash .agents/fetch-skill.sh <skill-name> get-zeked/<skill-name>`
 
-| Super-Skill | Separate Repo |
-|---|---|
-| AI Agent Builder | get-zeked/ai-agent-super-skill |
-| Dev & Engineering | get-zeked/dev-engineering-super-skill |
-| Marketing | get-zeked/marketing-super-skill |
-| Sales | get-zeked/sales-super-skill |
-| Finance | get-zeked/finance-super-skill |
-| Legal | get-zeked/legal-super-skill |
-| Product Management | get-zeked/pm-super-skill |
-| Operations & CX | get-zeked/operations-cx-super-skill |
-| Research & Knowledge | get-zeked/research-knowledge-super-skill |
-| Content & Creative | get-zeked/content-creative-super-skill |
+| Skill | Repo | Description |
+|---|---|---|
+| **dev-engineering-super-skill** | get-zeked/dev-engineering-super-skill | **REQUIRED.** Comprehensive full-stack development reference: architecture, frontend, backend, TDD, debugging, code review, DevOps, security. |
+| ai-agent-super-skill | get-zeked/ai-agent-super-skill | AI/ML agent building |
+| marketing-super-skill | get-zeked/marketing-super-skill | Marketing & growth |
+| sales-super-skill | get-zeked/sales-super-skill | Sales & revenue |
+| finance-super-skill | get-zeked/finance-super-skill | Finance & accounting |
+| legal-super-skill | get-zeked/legal-super-skill | Legal operations |
+| pm-super-skill | get-zeked/pm-super-skill | Product management & UX |
+| operations-cx-super-skill | get-zeked/operations-cx-super-skill | Operations & customer experience |
+| research-knowledge-super-skill | get-zeked/research-knowledge-super-skill | Research & data |
+| content-creative-super-skill | get-zeked/content-creative-super-skill | Creative studio |
 
 ---
 
@@ -189,15 +189,23 @@ Do not write any code until brainstorm is complete and the human approves
 the direction.
 
 ### 2. Identify and fetch skills
-Based on the brainstorm outcome, consult the Skill Catalog below to identify
-which additional skills are needed for this task.
+First, auto-fetch the required skills for any code task:
 
-For each skill needed:
+```bash
+bash .agents/fetch-skill.sh writing-plans obra/superpowers
+bash .agents/fetch-skill.sh test-driven-development obra/superpowers
+bash .agents/fetch-skill.sh requesting-code-review obra/superpowers
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers
+bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill
+```
+
+Then consult the Skill Catalog below for any additional skills needed for this
+specific task (e.g. frontend-design, xlsx, pdf).
+
+For each additional skill:
 ```bash
 bash .agents/fetch-skill.sh <skill-name> <repo-slug>
 ```
-
-Always fetch `writing-plans` from `obra/superpowers` — it is required for step 3.
 
 Tell the human which skills you fetched and which (if any) were not found.
 Do not proceed until the human confirms.
@@ -408,8 +416,10 @@ for REPO in "${REPOS[@]}"; do
   for SKILL_PATH in \
     "skills/$SKILL_NAME/SKILL.md" \
     "$SKILL_NAME/SKILL.md" \
+    "SKILL.md" \
     "skills/$SKILL_NAME/skill.md" \
-    "$SKILL_NAME/skill.md"
+    "$SKILL_NAME/skill.md" \
+    "skill.md"
   do
     DOWNLOAD_URL=""
     if DOWNLOAD_URL=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
@@ -426,7 +436,59 @@ for REPO in "${REPOS[@]}"; do
         | base64 --decode > "$SKILL_FILE"
 
       if [[ -s "$SKILL_FILE" ]]; then
-        echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
+        # ── Safety scan ──────────────────────────────────────────────
+        WARNINGS=""
+
+        # Network exfiltration patterns (actual invocations, not documentation references)
+        if grep -iE '^\s*(curl|wget|nc|netcat)\s+(http|ftp|\$|`)|`(curl|wget|nc|netcat)\s+(http|ftp|\$|`)|\$\((curl|wget|nc|netcat)\s' "$SKILL_FILE" 2>/dev/null \
+          | grep -qivE 'github\.com|anthropic|example\.com|localhost|127\.0\.0\.1'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains network commands (curl/wget/nc) targeting non-standard URLs\n"
+        fi
+
+        # Credential/secret access
+        if grep -qiE '\.env\b|credentials|\.ssh/|private.key|secret.key|api.key|token.*=|password.*=' "$SKILL_FILE" 2>/dev/null; then
+          if grep -iE '\.env\b|credentials|\.ssh/|private.key|secret.key' "$SKILL_FILE" 2>/dev/null | grep -qiE 'read|cat|source|export|send|upload|curl|post'; then
+            WARNINGS="${WARNINGS}  ⚠ References reading or transmitting credentials/secrets\n"
+          fi
+        fi
+
+        # Destructive file operations (exclude harmless stderr redirection)
+        if grep -iE 'rm\s+-rf\s+[~/\*]|rm\s+-rf\s+\$|shred' "$SKILL_FILE" 2>/dev/null \
+          | grep -qivE 'rm\s+-rf\s+\$SKILL_DIR|rm\s+-f\s+\$SKILL_FILE'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains destructive file operations (rm -rf with broad paths)\n"
+        fi
+
+        # Base64 encode + send pattern (data exfiltration)
+        if grep -qiE 'base64.*curl|base64.*wget|base64.*nc\b|encode.*send|encode.*post' "$SKILL_FILE" 2>/dev/null; then
+          WARNINGS="${WARNINGS}  ⚠ Contains base64 encode + network send pattern (possible exfiltration)\n"
+        fi
+
+        # Disable safety/verification (exclude anti-pattern docs and non-safety contexts)
+        if grep -iE 'skip.*(code review|safety review|security review|all review|all test|every test)|disable.*safety|ignore.*warning|--no-verify|bypass.*(safety|security|check|verification)' "$SKILL_FILE" 2>/dev/null \
+          | grep -ivE 'never|don.t|do not|must not|should not|prohibited|anti.pattern|common mistake|"skip|rationalization|^\s*-\s*skip|^\*\*skip' \
+          | grep -qiE 'skip|disable|ignore|bypass|--no-verify'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains instructions to skip safety checks or reviews\n"
+        fi
+
+        # Eval/exec injection
+        if grep -qiE '^\s*eval\b|\beval\s*\(|\bexec\s*\(' "$SKILL_FILE" 2>/dev/null; then
+          WARNINGS="${WARNINGS}  ⚠ Contains eval/exec calls (code injection risk)\n"
+        fi
+
+        if [[ -n "$WARNINGS" ]]; then
+          echo ""
+          echo "⚠ SAFETY WARNINGS for $SKILL_NAME:"
+          echo -e "$WARNINGS"
+          echo "  Source: $REPO ($SKILL_PATH)"
+          echo "  File saved to: $SKILL_FILE"
+          echo ""
+          echo "  Review the skill content before proceeding."
+          echo "  To remove: rm -r $SKILL_DIR"
+          echo ""
+        else
+          echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
+        fi
+
         FOUND=1
         break 2
       else
@@ -514,8 +576,10 @@ for REPO in "${REPOS[@]}"; do
   for SKILL_PATH in \
     "skills/$SKILL_NAME/SKILL.md" \
     "$SKILL_NAME/SKILL.md" \
+    "SKILL.md" \
     "skills/$SKILL_NAME/skill.md" \
-    "$SKILL_NAME/skill.md"
+    "$SKILL_NAME/skill.md" \
+    "skill.md"
   do
     DOWNLOAD_URL=""
     if DOWNLOAD_URL=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
@@ -591,15 +655,23 @@ Do not write any code until brainstorm is complete and the human approves
 the direction.
 
 ### 2. Identify and fetch skills
-Based on the brainstorm outcome, consult the Skill Catalog below to identify
-which additional skills are needed for this task.
+First, auto-fetch the required skills for any code task:
 
-For each skill needed:
+```bash
+bash .agents/fetch-skill.sh writing-plans obra/superpowers
+bash .agents/fetch-skill.sh test-driven-development obra/superpowers
+bash .agents/fetch-skill.sh requesting-code-review obra/superpowers
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers
+bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill
+```
+
+Then consult the Skill Catalog below for any additional skills needed for this
+specific task (e.g. frontend-design, xlsx, pdf).
+
+For each additional skill:
 ```bash
 bash .agents/fetch-skill.sh <skill-name> <repo-slug>
 ```
-
-Always fetch `writing-plans` from `obra/superpowers` — it is required for step 3.
 
 Tell the human which skills you fetched and which (if any) were not found.
 Do not proceed until the human confirms.
