@@ -132,7 +132,16 @@ For each additional skill:
 bash .agents/fetch-skill.sh <skill-name> <repo-slug>
 ```
 
-Tell the human which skills you fetched and which (if any) were not found.
+**After fetching, read every skill immediately.** For each fetched skill, read
+its SKILL.md and produce this summary table:
+
+| Skill | Key Procedure | Will Apply In |
+|---|---|---|
+| (skill name) | (main process/steps the skill defines) | (which workflow step) |
+
+Present this table to the human. This makes it visible which skills were
+fetched, what they require, and prevents skipping procedures later.
+
 Do not proceed until the human confirms.
 
 ### 3. Plan
@@ -346,7 +355,16 @@ For each additional skill:
 bash .agents/fetch-skill.sh <skill-name> <repo-slug>
 ```
 
-Tell the human which skills you fetched and which (if any) were not found.
+**After fetching, read every skill immediately.** For each fetched skill, read
+its SKILL.md and produce this summary table:
+
+| Skill | Key Procedure | Will Apply In |
+|---|---|---|
+| (skill name) | (main process/steps the skill defines) | (which workflow step) |
+
+Present this table to the human. This makes it visible which skills were
+fetched, what they require, and prevents skipping procedures later.
+
 Do not proceed until the human confirms.
 
 ### 3. Plan
