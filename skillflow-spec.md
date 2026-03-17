@@ -19,9 +19,10 @@ Build the following in this order:
 2. Verify all files in Validation Criteria exist and are non-empty
 3. Ask the human for a project name and description to create a new project
 
-The repo also contains two files used by `init-project.sh` at runtime:
+The repo also contains three files used by `init-project.sh` at runtime:
 - `fetch-skill.sh` — the skill fetcher with safety scanner (single source of truth)
 - `skill-catalog.md` — the categorized skill catalog (single source of truth)
+- `skill-scenarios.md` — standard scenario mappings with checkpoint criteria
 
 These files are copied into every new project by the init script.
 Do not duplicate their content — the init script reads them directly.
@@ -54,6 +55,7 @@ my-project/
 ├── .agents/
 │   ├── fetch-skill.sh        ← copied from repo, fetches skills with safety scan
 │   ├── skill-catalog.md      ← copied from repo, refreshed on boot
+│   ├── skill-scenarios.md    ← copied from repo, scenario mappings + checkpoints
 │   └── skills/               ← empty at init, populated at runtime
 ├── src/
 ├── docs/
@@ -105,44 +107,35 @@ the direction.
 
 ### 2. Identify and fetch skills
 
-**Always required (every task):**
-```bash
-bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
-```
+1. **Match the scenario.** Read .agents/skill-scenarios.md and find the
+   standard scenario that best matches this task (e.g. "Feature Development",
+   "Business Plan", "Bug Fix"). Tell the human which scenario you matched.
 
-**If the task involves writing code, also fetch:**
-```bash
-bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
-bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
-bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
-```
+2. **Fetch all skills listed for that scenario.** Use `--refresh` on each:
+   ```bash
+   bash .agents/fetch-skill.sh <skill-name> <repo-slug> --refresh
+   ```
 
-**If the task involves research, documents, or business planning, also fetch:**
-```bash
-bash .agents/fetch-skill.sh research-knowledge-super-skill get-zeked/research-knowledge-super-skill --refresh
-bash .agents/fetch-skill.sh doc-coauthoring anthropics/skills --refresh
-```
+3. **Check the catalog for extras.** Read .agents/skill-catalog.md. Show the
+   human the full catalog and recommend any additional skills. The human
+   decides what to add or remove.
 
-Then consult .agents/skill-catalog.md for any additional skills needed
-for this specific task (e.g. frontend-design, xlsx, pdf, finance-super-skill).
+4. **If domain knowledge is needed** that no upstream skill covers, fetch
+   `skill-creator` from anthropics/skills and build a custom project skill.
+   See the "Creating Custom Project Skills" section in skill-scenarios.md.
 
-For each additional skill:
-```bash
-bash .agents/fetch-skill.sh <skill-name> <repo-slug>
-```
+5. **Read every fetched skill immediately.** For each skill, read its
+   SKILL.md and produce this summary:
 
-**After fetching, read every skill immediately.** For each fetched skill, read
-its SKILL.md and produce this summary table:
+   | Skill | Key Procedure | Will Apply In |
+   |---|---|---|
+   | (skill name) | (main process/steps the skill defines) | (which workflow step) |
 
-| Skill | Key Procedure | Will Apply In |
-|---|---|---|
-| (skill name) | (main process/steps the skill defines) | (which workflow step) |
+6. **Note the checkpoint criteria.** The matched scenario in
+   skill-scenarios.md defines specific pass/fail checkpoint items.
+   List them so the human knows what will be verified after implementation.
 
-Present this table to the human. This makes it visible which skills were
-fetched, what they require, and prevents skipping procedures later.
-
-Do not proceed until the human confirms.
+Present all of the above to the human. Do not proceed until confirmed.
 
 ### 3. Plan
 Fetch the planning skill if not already present:
@@ -159,20 +152,30 @@ Follow the approved plan. Work in small committed steps.
 Ask before making decisions not covered by the plan.
 
 ### Checkpoint: Skill Compliance
-Before proceeding to review, self-evaluate against each fetched skill:
+Before proceeding to review, complete two checks:
 
-| Skill | Required Procedure | Followed? | Evidence |
+**A. Scenario checkpoint** — run through the specific pass/fail criteria
+from the matched scenario in .agents/skill-scenarios.md:
+
+| Checkpoint Item | Pass/Fail | Evidence |
+|---|---|---|
+| (each item from the scenario) | Pass/Fail | (point to specific output) |
+
+Any "Fail" must be fixed or explicitly approved by the human to skip.
+
+**B. Skill procedure check** — for each fetched skill:
+
+| Skill | Key Procedure | Followed? | Evidence |
 |---|---|---|---|
-| (each fetched skill) | (what it required) | Yes/No | (what you actually did — point to specific output) |
+| (skill name) | (what it required) | Yes/No | (specific output) |
 
 Rules:
-- Every "No" must either be fixed before proceeding, or explicitly
-  approved by the human as intentionally skipped.
 - "Evidence" must point to concrete output (a file, a section, a specific
   action taken) — not just "I did it."
-- If more than half the skills show "No", go back to step 4.
+- Any "Fail" or "No" must be fixed or explicitly approved to skip.
+- If more than half the items fail, go back to step 4.
 
-Present this table to the human before proceeding to review.
+Present both tables to the human before proceeding to review.
 
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
@@ -305,6 +308,7 @@ cp "$SPEC_DIR/fetch-skill.sh" .agents/fetch-skill.sh
 chmod +x .agents/fetch-skill.sh
 
 cp "$SPEC_DIR/skill-catalog.md" .agents/skill-catalog.md
+cp "$SPEC_DIR/skill-scenarios.md" .agents/skill-scenarios.md
 
 # ── Write AGENTS.md ───────────────────────────────────────────────────────────
 cat > AGENTS.md << 'AGENTSEOF'
@@ -344,44 +348,35 @@ the direction.
 
 ### 2. Identify and fetch skills
 
-**Always required (every task):**
-```bash
-bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
-```
+1. **Match the scenario.** Read .agents/skill-scenarios.md and find the
+   standard scenario that best matches this task (e.g. "Feature Development",
+   "Business Plan", "Bug Fix"). Tell the human which scenario you matched.
 
-**If the task involves writing code, also fetch:**
-```bash
-bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
-bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
-bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
-```
+2. **Fetch all skills listed for that scenario.** Use `--refresh` on each:
+   ```bash
+   bash .agents/fetch-skill.sh <skill-name> <repo-slug> --refresh
+   ```
 
-**If the task involves research, documents, or business planning, also fetch:**
-```bash
-bash .agents/fetch-skill.sh research-knowledge-super-skill get-zeked/research-knowledge-super-skill --refresh
-bash .agents/fetch-skill.sh doc-coauthoring anthropics/skills --refresh
-```
+3. **Check the catalog for extras.** Read .agents/skill-catalog.md. Show the
+   human the full catalog and recommend any additional skills. The human
+   decides what to add or remove.
 
-Then consult .agents/skill-catalog.md for any additional skills needed
-for this specific task (e.g. frontend-design, xlsx, pdf, finance-super-skill).
+4. **If domain knowledge is needed** that no upstream skill covers, fetch
+   `skill-creator` from anthropics/skills and build a custom project skill.
+   See the "Creating Custom Project Skills" section in skill-scenarios.md.
 
-For each additional skill:
-```bash
-bash .agents/fetch-skill.sh <skill-name> <repo-slug>
-```
+5. **Read every fetched skill immediately.** For each skill, read its
+   SKILL.md and produce this summary:
 
-**After fetching, read every skill immediately.** For each fetched skill, read
-its SKILL.md and produce this summary table:
+   | Skill | Key Procedure | Will Apply In |
+   |---|---|---|
+   | (skill name) | (main process/steps the skill defines) | (which workflow step) |
 
-| Skill | Key Procedure | Will Apply In |
-|---|---|---|
-| (skill name) | (main process/steps the skill defines) | (which workflow step) |
+6. **Note the checkpoint criteria.** The matched scenario in
+   skill-scenarios.md defines specific pass/fail checkpoint items.
+   List them so the human knows what will be verified after implementation.
 
-Present this table to the human. This makes it visible which skills were
-fetched, what they require, and prevents skipping procedures later.
-
-Do not proceed until the human confirms.
+Present all of the above to the human. Do not proceed until confirmed.
 
 ### 3. Plan
 Fetch the planning skill if not already present:
@@ -398,20 +393,30 @@ Follow the approved plan. Work in small committed steps.
 Ask before making decisions not covered by the plan.
 
 ### Checkpoint: Skill Compliance
-Before proceeding to review, self-evaluate against each fetched skill:
+Before proceeding to review, complete two checks:
 
-| Skill | Required Procedure | Followed? | Evidence |
+**A. Scenario checkpoint** — run through the specific pass/fail criteria
+from the matched scenario in .agents/skill-scenarios.md:
+
+| Checkpoint Item | Pass/Fail | Evidence |
+|---|---|---|
+| (each item from the scenario) | Pass/Fail | (point to specific output) |
+
+Any "Fail" must be fixed or explicitly approved by the human to skip.
+
+**B. Skill procedure check** — for each fetched skill:
+
+| Skill | Key Procedure | Followed? | Evidence |
 |---|---|---|---|
-| (each fetched skill) | (what it required) | Yes/No | (what you actually did — point to specific output) |
+| (skill name) | (what it required) | Yes/No | (specific output) |
 
 Rules:
-- Every "No" must either be fixed before proceeding, or explicitly
-  approved by the human as intentionally skipped.
 - "Evidence" must point to concrete output (a file, a section, a specific
   action taken) — not just "I did it."
-- If more than half the skills show "No", go back to step 4.
+- Any "Fail" or "No" must be fixed or explicitly approved to skip.
+- If more than half the items fail, go back to step 4.
 
-Present this table to the human before proceeding to review.
+Present both tables to the human before proceeding to review.
 
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
@@ -554,6 +559,7 @@ skillflow/
 ├── skillflow-spec.md        ← this file: build instructions + templates
 ├── fetch-skill.sh           ← skill fetcher with safety scanner
 ├── skill-catalog.md         ← categorized skill catalog
+├── skill-scenarios.md       ← standard scenario mappings + checkpoint criteria
 ├── init-project.sh          ← generated by executing this spec
 └── README.md
 ```

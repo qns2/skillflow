@@ -13,6 +13,7 @@ No autonomous pipelines. No Python runtime. Just markdown files Claude Code read
 | `skillflow-spec.md` | Build spec — Claude Code reads this and builds the starter |
 | `fetch-skill.sh` | Skill fetcher with safety scanner (single source of truth) |
 | `skill-catalog.md` | Categorized skill catalog (single source of truth) |
+| `skill-scenarios.md` | Standard scenario mappings with checkpoint criteria |
 | `init-project.sh` | Script to create a new project (created by running the spec) |
 
 ---
