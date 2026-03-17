@@ -1,4 +1,4 @@
-# simple-project-starter — Build Spec v1
+# simple-project-starter — Build Spec v2
 
 ## Execution Preamble
 
@@ -7,20 +7,23 @@ Read this entire specification before creating or modifying any files.
 Rules for the coding agent executing this spec:
 
 1. Build directly into the current directory. Do not create a subdirectory.
-2. Every SKILL.md must be fully written — no placeholders.
-3. Keep it simple. No Python runtime, no hooks, no dependency management.
-4. When done, verify all files exist as listed in Validation Criteria.
+2. Keep it simple. No Python runtime, no hooks, no dependency management.
+3. When done, verify all files exist as listed in Validation Criteria.
+4. After validation, ask the human: "Ready. What would you like to build? Give me your project name and a short description."
 
 ## Build Instructions
 
 Build the following in this order:
 
-1. `skills/` folder and all five SKILL.md files — content is in the Skills section below
-2. `init-simple-project.sh` — content is in the Init Script section below, make it executable
-3. Verify all files in Validation Criteria exist and are non-empty
+1. `init-simple-project.sh` — content is in the Init Script section below, make it executable
+2. Verify all files in Validation Criteria exist and are non-empty
+3. Ask the human for a project name and description to create a new project
+
+No `skills/` folder needed in this repo. Skills live in the upstream repos
+and are fetched at runtime by Claude Code using `fetch-skill.sh`.
 
 That is all. Do not create a project directory — this spec builds
-the contents of the agentworks-spec repo itself, not a project.
+the contents of the simple-project-starter repo itself, not a project.
 
 ---
 
@@ -30,8 +33,8 @@ A minimal project starter for human-in-the-loop Claude Code workflows.
 
 No autonomous pipelines. No Python runtime machinery. Just:
 - An AGENTS.md that defines the workflow
-- A small set of always-installed skills
-- A skill index pointing to three upstream skill libraries
+- Skills fetched on demand from three upstream repos
+- A skill catalog so Claude Code knows what is available
 - A workflow Claude Code follows on every project
 
 The entire runtime is Claude Code reading markdown files and following them.
@@ -40,29 +43,107 @@ The entire runtime is Claude Code reading markdown files and following them.
 
 ## Folder Structure
 
+What the init script creates inside a new project:
+
 ```
 my-project/
 ├── AGENTS.md
 ├── README.md
 ├── .gitignore
 ├── .agents/
-│   └── skills/
-│       ├── brainstorm/
-│       │   └── SKILL.md
-│       ├── identify-and-install-skills/
-│       │   └── SKILL.md
-│       ├── plan-work/
-│       │   └── SKILL.md
-│       ├── review-output/
-│       │   └── SKILL.md
-│       └── commit-and-push/
-│           └── SKILL.md
+│   ├── fetch-skill.sh        ← fetches skills from GitHub on demand
+│   └── skills/               ← empty at init, populated at runtime
 ├── src/
 ├── docs/
 └── tests/
 ```
 
-That is the entire structure. Nothing else is required.
+Skills are fetched into `.agents/skills/<skill-name>/SKILL.md` by Claude Code
+as needed, using `fetch-skill.sh`. Nothing is pre-installed.
+
+---
+
+## Skill Catalog
+
+These are the skills available in the three upstream repos. Claude Code
+consults this catalog when deciding which skills to fetch for a task.
+
+**Last updated:** 2026-03-17
+
+To refresh this catalog, run:
+```bash
+gh api repos/anthropics/skills/git/trees/HEAD:skills --jq '.tree[].path'
+gh api repos/obra/superpowers/git/trees/HEAD:skills --jq '.tree[].path'
+```
+
+### Development Process — obra/superpowers
+
+| Skill | Repo | Description |
+|---|---|---|
+| brainstorming | obra/superpowers | Interactive brainstorming before any code. Explores intent, requirements, design. Requires human approval before proceeding. |
+| writing-plans | obra/superpowers | Write implementation plans assuming zero codebase context. Covers files, code, testing, docs. Emphasizes DRY, YAGNI, TDD. |
+| executing-plans | obra/superpowers | Load a written plan, review critically, execute all tasks with review checkpoints. |
+| test-driven-development | obra/superpowers | Write test first, watch it fail, write minimal code to pass. For all new features and bug fixes. |
+| systematic-debugging | obra/superpowers | Root cause investigation before any fix. Symptom fixes are treated as failure. |
+| requesting-code-review | obra/superpowers | Dispatch a code-reviewer subagent to catch issues. Mandatory after major features and before merging. |
+| receiving-code-review | obra/superpowers | Handle incoming review feedback with technical rigor. Verify before implementing suggestions. |
+| verification-before-completion | obra/superpowers | Run verification commands and confirm output before claiming work is done. Evidence before assertions. |
+| dispatching-parallel-agents | obra/superpowers | Dispatch one agent per independent problem domain to work concurrently with isolated context. |
+| subagent-driven-development | obra/superpowers | Execute plans by dispatching a fresh subagent per task with two-stage review after each. |
+| finishing-a-development-branch | obra/superpowers | Guide completion when implementation is done. Present options for merge, PR, or cleanup. |
+| using-git-worktrees | obra/superpowers | Create isolated git worktrees for feature work or plan execution. |
+| writing-skills | obra/superpowers | Create, edit, or verify skills. TDD methodology applied to process documentation. |
+| using-superpowers | obra/superpowers | Meta-skill: how to find and use other skills. |
+
+### Documents & Media — anthropics/skills
+
+| Skill | Repo | Description |
+|---|---|---|
+| docx | anthropics/skills | Create, read, edit Word documents. Tables of contents, headings, page numbers, letterheads. |
+| pdf | anthropics/skills | Full PDF processing: read, merge, split, rotate, watermark, create, fill forms, OCR. |
+| pptx | anthropics/skills | Create, read, edit PowerPoint files. Slide decks, pitch decks, templates, speaker notes. |
+| xlsx | anthropics/skills | Create, read, edit spreadsheets. Formulas, formatting, charting, data cleaning. Zero formula errors. |
+| doc-coauthoring | anthropics/skills | Structured co-authoring workflow: context gathering, refinement, reader testing. |
+| internal-comms | anthropics/skills | Write internal communications: 3P updates, newsletters, FAQs, status reports, incident reports. |
+
+### Design & Frontend — anthropics/skills
+
+| Skill | Repo | Description |
+|---|---|---|
+| frontend-design | anthropics/skills | Production-grade frontend interfaces with high design quality. Avoids generic AI aesthetics. |
+| canvas-design | anthropics/skills | Create visual art in PNG/PDF using design philosophy. Posters, static art, visual design. |
+| web-artifacts-builder | anthropics/skills | Multi-component HTML artifacts with React 18, TypeScript, Vite, Tailwind, shadcn/ui. |
+| theme-factory | anthropics/skills | Style artifacts with themes. 10 pre-set themes or generate new ones on-the-fly. |
+| brand-guidelines | anthropics/skills | Apply brand colors and typography. Color palettes, font pairings, visual identity. |
+| algorithmic-art | anthropics/skills | Generative art with p5.js. Flow fields, particle systems, seeded randomness. |
+| slack-gif-creator | anthropics/skills | Create animated GIFs optimized for Slack emoji and message sizes. |
+
+### Development Tools — anthropics/skills
+
+| Skill | Repo | Description |
+|---|---|---|
+| claude-api | anthropics/skills | Build apps with Claude API or Anthropic SDK. Language detection, streaming, adaptive thinking. |
+| mcp-builder | anthropics/skills | Create MCP servers for LLM-to-service integration. Python (FastMCP) and Node/TypeScript. |
+| webapp-testing | anthropics/skills | Test local web apps with Playwright. Screenshots, browser logs, UI verification. |
+| skill-creator | anthropics/skills | Create and measure skill performance. Evals, benchmarking, description optimization. |
+
+### Cross-Domain — get-zeked/perplexity-super-skills
+
+These are index repos linking to standalone super-skill files. Each combines
+Perplexity Computer with Claude Code capabilities.
+
+| Super-Skill | Separate Repo |
+|---|---|
+| AI Agent Builder | get-zeked/ai-agent-super-skill |
+| Dev & Engineering | get-zeked/dev-engineering-super-skill |
+| Marketing | get-zeked/marketing-super-skill |
+| Sales | get-zeked/sales-super-skill |
+| Finance | get-zeked/finance-super-skill |
+| Legal | get-zeked/legal-super-skill |
+| Product Management | get-zeked/pm-super-skill |
+| Operations & CX | get-zeked/operations-cx-super-skill |
+| Research & Knowledge | get-zeked/research-knowledge-super-skill |
+| Content & Creative | get-zeked/content-creative-super-skill |
 
 ---
 
@@ -82,19 +163,52 @@ stop and ask.
 
 Every task follows this sequence. Do not skip steps.
 
+### 0. Boot
+Before doing anything else:
+
+1. **Refresh the Skill Catalog.** Run:
+   ```bash
+   gh api repos/anthropics/skills/git/trees/HEAD:skills --jq '.tree[].path' 2>/dev/null
+   gh api repos/obra/superpowers/git/trees/HEAD:skills --jq '.tree[].path' 2>/dev/null
+   ```
+   Compare the output with the Skill Catalog section below. If new skills
+   appear that are not in the catalog, add them. If listed skills are gone,
+   remove them. Tell the human what changed (if anything).
+
+2. **Fetch the brainstorming skill.** Check whether .agents/skills/brainstorming/SKILL.md exists.
+   If it does not exist, run:
+   ```bash
+   bash .agents/fetch-skill.sh brainstorming obra/superpowers
+   ```
+
+Do not proceed until both steps are complete.
+
 ### 1. Brainstorm
-Read .agents/skills/brainstorm/SKILL.md and run it.
+Read .agents/skills/brainstorming/SKILL.md and run it.
 Do not write any code until brainstorm is complete and the human approves
 the direction.
 
-### 2. Identify skills
-Read .agents/skills/identify-and-install-skills/SKILL.md.
-Based on the brainstorm outcome and planned work, identify which additional
-skills are needed. Copy them into .agents/skills/ from the skill sources
-listed in that skill file.
+### 2. Identify and fetch skills
+Based on the brainstorm outcome, consult the Skill Catalog below to identify
+which additional skills are needed for this task.
+
+For each skill needed:
+```bash
+bash .agents/fetch-skill.sh <skill-name> <repo-slug>
+```
+
+Always fetch `writing-plans` from `obra/superpowers` — it is required for step 3.
+
+Tell the human which skills you fetched and which (if any) were not found.
+Do not proceed until the human confirms.
 
 ### 3. Plan
-Read .agents/skills/plan-work/SKILL.md.
+Fetch the planning skill if not already present:
+```bash
+bash .agents/fetch-skill.sh writing-plans obra/superpowers
+```
+
+Read .agents/skills/writing-plans/SKILL.md.
 Produce a written plan in docs/plan.md before touching any code.
 Wait for human approval before proceeding.
 
@@ -103,19 +217,79 @@ Follow the approved plan. Work in small committed steps.
 Ask before making decisions not covered by the plan.
 
 ### 5. Review
-Read .agents/skills/review-output/SKILL.md.
-Review all changed code against the plan and acceptance criteria.
+Review all changed code against docs/plan.md and acceptance criteria.
 
-If issues found:
-- Fix obvious bugs automatically
-- List non-obvious issues clearly and STOP — wait for human input
-- Do not commit while unresolved issues exist
+Categorize every issue found:
+- **Auto-fix** — obvious bugs, typos, formatting, missing imports.
+  Fix these immediately without asking.
+- **Human review required** — logic errors, architectural decisions,
+  unclear requirements, anything with more than one reasonable solution.
+  List these clearly and STOP.
 
-If no serious issues:
-- Proceed to commit
+Fix all auto-fix issues. If human-review issues exist, print a numbered
+list and stop. If no issues remain, print "Review passed. Ready to commit."
 
 ### 6. Commit and push
-Read .agents/skills/commit-and-push/SKILL.md and follow it.
+1. Verify the current branch is NOT main. If on main, create a task branch first.
+2. Run a final check — no .env files staged, no secrets in diff.
+3. Stage all changed files: `git add -A`
+4. Write a Conventional Commits message: `<type>(<scope>): <description>`
+5. Commit and push: `git commit -m "<message>" && git push origin HEAD`
+6. Print summary: branch, commit message, files changed, next action.
+
+## Skill Catalog
+
+Available skills that can be fetched on demand. Use `bash .agents/fetch-skill.sh <name> <repo>`.
+
+### Development Process — obra/superpowers
+
+| Skill | Description |
+|---|---|
+| brainstorming | Interactive brainstorming before any code |
+| writing-plans | Write implementation plans with full context |
+| executing-plans | Execute written plans with review checkpoints |
+| test-driven-development | Write test first, watch it fail, write code to pass |
+| systematic-debugging | Root cause investigation before any fix |
+| requesting-code-review | Dispatch code-reviewer subagent |
+| receiving-code-review | Handle review feedback with technical rigor |
+| verification-before-completion | Evidence before completion claims |
+| dispatching-parallel-agents | Concurrent agents for independent tasks |
+| subagent-driven-development | Fresh subagent per task with two-stage review |
+| finishing-a-development-branch | Merge, PR, or cleanup options |
+| using-git-worktrees | Isolated git worktrees for feature work |
+| writing-skills | Create or edit skills with TDD methodology |
+
+### Documents & Media — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| docx | Word documents |
+| pdf | PDF processing, creation, OCR |
+| pptx | PowerPoint files |
+| xlsx | Spreadsheets, formulas, charts |
+| doc-coauthoring | Co-authoring workflow |
+| internal-comms | Internal communications |
+
+### Design & Frontend — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| frontend-design | Production-grade frontend interfaces |
+| canvas-design | Visual art in PNG/PDF |
+| web-artifacts-builder | Multi-component HTML artifacts |
+| theme-factory | Styling with themes |
+| brand-guidelines | Brand colors and typography |
+| algorithmic-art | Generative art with p5.js |
+| slack-gif-creator | Animated GIFs for Slack |
+
+### Development Tools — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| claude-api | Claude API / Anthropic SDK |
+| mcp-builder | MCP server creation |
+| webapp-testing | Playwright web testing |
+| skill-creator | Skill creation and measurement |
 
 ## Rules
 
@@ -123,7 +297,9 @@ Read .agents/skills/commit-and-push/SKILL.md and follow it.
 - Never push without running the review step first
 - Never make architectural decisions without asking first
 - Always write docs/plan.md before writing code
-- Keep .agents/skills/ in sync — if you use a skill, it must be installed
+- Keep .agents/skills/ in sync — if you use a skill, it must be fetched
+- Never copy skill content from memory — always fetch from the repos
+- When fetching skills, always specify the repo slug (e.g. obra/superpowers)
 
 ## Done criteria
 
@@ -133,223 +309,6 @@ A task is done when:
 - Changes are committed and pushed
 - docs/plan.md reflects what was actually built
 ```
-
----
-
-## Skills
-
-### brainstorm/SKILL.md
-
-**Title:** Brainstorm
-
-**Description:**
-An interactive back-and-forth conversation to shape a project or feature
-idea before any planning or code is written. The goal is to arrive at a
-clear, agreed direction that both the human and Claude Code are aligned on.
-
-**When to use:**
-- At the start of every new project or significant feature
-- When the human's initial prompt is vague or exploratory
-- When multiple approaches are possible and the human needs to choose
-
-**When NOT to use:**
-- When the task is clearly defined and small (a bug fix, a minor change)
-- When a plan already exists in docs/plan.md
-
-**Expected inputs:**
-- The human's initial prompt or idea
-
-**Procedure:**
-
-1. Read the human's prompt carefully. Identify what is clear and what is ambiguous.
-2. Ask one focused question at a time — do not overwhelm with a list.
-   Good first questions:
-   - "Who is this for — just you, or other users too?"
-   - "What does success look like in one sentence?"
-   - "Is there anything you've already tried or ruled out?"
-3. After each answer, reflect back what you heard and check understanding.
-4. Identify the core problem being solved. State it explicitly.
-5. Propose 2-3 concrete directions (not exhaustive lists — real choices).
-6. Once the human picks a direction, summarize the agreed approach in one paragraph.
-7. Ask: "Does this match what you have in mind? Should we proceed to planning?"
-8. Do not proceed until the human explicitly approves.
-
-**Expected output:**
-A one-paragraph agreed direction summary, approved by the human,
-ready to hand to plan-work.
-
----
-
-### identify-and-install-skills/SKILL.md
-
-**Title:** Identify and Install Skills
-
-**Description:**
-Given a brainstorm outcome and planned work, identify which skills from
-the available skill sources would help, and copy them into .agents/skills/.
-
-This is how the project's skill set grows — not by pre-installing everything,
-but by pulling in exactly what is needed for the current task.
-
-**When to use:**
-- After brainstorm, before planning
-- When starting a task that requires capabilities not yet in .agents/skills/
-
-**When NOT to use:**
-- Do not install skills speculatively — only install what the current task needs
-
-**Skill sources:**
-
-The following repositories contain curated skills. Read their skill indexes
-to find relevant skills. Copy the SKILL.md file into the appropriate
-.agents/skills/<category>/<skill-name>/ directory.
-
-| Source | URL | Notes |
-|---|---|---|
-| agentworks | https://github.com/<your-org>/agentworks | Primary source — curated skills across common, development, research |
-| anthropic-skills | https://github.com/anthropics/skills | Official Anthropic coding agent skills |
-| perplexity-super-skills | https://github.com/get-zeked/perplexity-super-skills | Research and retrieval skills |
-| superpowers | https://github.com/obra/superpowers | Community skill collection |
-
-**Procedure:**
-
-1. Read the brainstorm summary and planned work.
-2. List the capabilities needed that are not already in .agents/skills/.
-3. For each capability, check agentworks first. If found, copy it.
-4. If not in agentworks, check the other three sources in order.
-5. Copy the SKILL.md into .agents/skills/<category>/<skill-name>/SKILL.md.
-6. Add a comment to AGENTS.md listing which skills are installed and why.
-7. If a needed skill does not exist in any source, note it as a gap
-   and proceed without it — do not create a skill on the fly.
-
-**Expected output:**
-All needed skills installed in .agents/skills/.
-AGENTS.md updated with installed skill list.
-
----
-
-### plan-work/SKILL.md
-
-**Title:** Plan Work
-
-**Description:**
-Turn a brainstorm outcome into a concrete, written implementation plan
-that Claude Code and the human are both aligned on before any code is written.
-
-**When to use:**
-- After brainstorm is approved
-- Before implementing any feature or significant change
-
-**When NOT to use:**
-- For trivial single-line fixes — just do them
-- Before brainstorm is complete
-
-**Expected inputs:**
-- The approved brainstorm summary
-- Any constraints mentioned (tech stack, deadline, existing code)
-
-**Procedure:**
-
-1. Write docs/plan.md with these sections:
-   - **Goal** — one sentence
-   - **Scope** — what is included and explicitly what is NOT included
-   - **Approach** — the technical approach in plain language
-   - **Steps** — numbered implementation steps, each small enough to commit separately
-   - **Acceptance criteria** — how to know when each step is done
-   - **Open questions** — anything that needs human input before or during implementation
-2. Present the plan to the human.
-3. Address any open questions before proceeding.
-4. Wait for explicit approval: "looks good" or "proceed" is enough.
-5. Do not write any code until approval is given.
-
-**Expected output:**
-docs/plan.md — approved by human, ready for implementation.
-
----
-
-### review-output/SKILL.md
-
-**Title:** Review Output
-
-**Description:**
-Review code or other output against the plan and acceptance criteria.
-Categorize issues clearly so the human knows exactly what needs attention
-and what has already been fixed.
-
-**When to use:**
-- After implementation is complete
-- Before every commit
-- Any time the human asks for a review
-
-**When NOT to use:**
-- Do not skip this step even if the change seems small
-
-**Expected inputs:**
-- The changed files
-- docs/plan.md (acceptance criteria)
-
-**Procedure:**
-
-1. Read docs/plan.md — understand what was supposed to be built.
-2. Review all changed files against the plan and acceptance criteria.
-3. Categorize every issue found:
-   - **Auto-fix** — obvious bugs, typos, formatting, missing imports.
-     Fix these immediately without asking.
-   - **Human review required** — logic errors, architectural decisions,
-     unclear requirements, anything with more than one reasonable solution.
-     List these clearly and STOP.
-4. Fix all auto-fix issues.
-5. If human-review issues exist:
-   - Print a numbered list: issue, location, why it needs human input
-   - Stop. Do not commit. Wait for the human to respond.
-6. If no human-review issues remain:
-   - Print: "Review passed. No unresolved issues. Ready to commit."
-   - Proceed to commit-and-push.
-
-**Expected output:**
-Either a list of issues requiring human input (and a stop),
-or explicit confirmation that review passed.
-
----
-
-### commit-and-push/SKILL.md
-
-**Title:** Commit and Push
-
-**Description:**
-Commit all reviewed changes with a clear conventional commit message
-and push to the remote branch.
-
-**When to use:**
-- After review-output passes with no unresolved issues
-- Never before review
-
-**When NOT to use:**
-- Do not commit while review issues are unresolved
-- Do not commit directly to main — always use a task branch
-
-**Expected inputs:**
-- All staged changes, reviewed and approved
-
-**Procedure:**
-
-1. Verify the current branch is NOT main. If on main, stop and ask.
-2. Run a final check — no .env files staged, no secrets in diff.
-3. Stage all changed files: `git add -A`
-4. Write the commit message following Conventional Commits:
-   `<type>(<scope>): <description>`
-   Types: feat, fix, docs, refactor, test, chore
-   Example: `feat(auth): add JWT token validation`
-5. Commit: `git commit -m "<message>"`
-6. Push: `git push origin <current-branch>`
-7. Print a summary:
-   - Branch pushed
-   - Commit message
-   - Files changed
-   - Next suggested action (open PR, continue to next step, etc.)
-
-**Expected output:**
-Changes committed and pushed. Summary printed.
 
 ---
 
@@ -364,27 +323,26 @@ Changes committed and pushed. Summary printed.
 
 1. Open Claude Code in this directory
 2. Describe what you want to build
-3. Claude Code will brainstorm with you, plan, implement, review, and commit
+3. Claude Code fetches the brainstorming skill, brainstorms with you,
+   fetches any additional skills needed, plans, implements, reviews, and commits
 
 ## Workflow
 
 See AGENTS.md for the full workflow Claude Code follows.
 
-## Skills installed
+## How skills work
 
-| Skill | Purpose |
-|---|---|
-| brainstorm | Shape ideas before planning |
-| identify-and-install-skills | Pull in skills as needed |
-| plan-work | Write docs/plan.md before coding |
-| review-output | Review before every commit |
-| commit-and-push | Commit and push with conventional commits |
+Skills are fetched on demand from GitHub using `gh` CLI:
 
-Additional skills are installed as needed from:
-- https://github.com/<your-org>/agentworks
+```bash
+bash .agents/fetch-skill.sh <skill-name> <repo-slug>
+```
+
+Sources:
 - https://github.com/anthropics/skills
-- https://github.com/get-zeked/perplexity-super-skills
 - https://github.com/obra/superpowers
+
+See the Skill Catalog in AGENTS.md for all available skills.
 ```
 
 ---
@@ -402,74 +360,427 @@ node_modules/
 
 ---
 
+## fetch-skill.sh
+
+**File:** `.agents/fetch-skill.sh`
+
+This is the single mechanism for fetching skills from GitHub. Claude Code calls
+it whenever it needs to install a skill. It searches the specified repo or
+all repos in order and installs the first match found.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   bash .agents/fetch-skill.sh <skill-name>
+#   bash .agents/fetch-skill.sh <skill-name> <org/repo>   # search specific repo only
+
+SKILL_NAME="${1:-}"
+SPECIFIC_REPO="${2:-}"
+
+if [[ -z "$SKILL_NAME" ]]; then
+  echo "Error: skill name required" && exit 1
+fi
+
+SKILL_DIR=".agents/skills/$SKILL_NAME"
+SKILL_FILE="$SKILL_DIR/SKILL.md"
+
+if [[ -f "$SKILL_FILE" ]]; then
+  echo "✓ $SKILL_NAME already installed, skipping"
+  exit 0
+fi
+
+REPOS=(
+  "anthropics/skills"
+  "obra/superpowers"
+)
+
+if [[ -n "$SPECIFIC_REPO" ]]; then
+  REPOS=("$SPECIFIC_REPO")
+fi
+
+FOUND=0
+
+for REPO in "${REPOS[@]}"; do
+  echo "→ Checking $REPO for skill: $SKILL_NAME"
+
+  for SKILL_PATH in \
+    "skills/$SKILL_NAME/SKILL.md" \
+    "$SKILL_NAME/SKILL.md" \
+    "skills/$SKILL_NAME/skill.md" \
+    "$SKILL_NAME/skill.md"
+  do
+    DOWNLOAD_URL=""
+    if DOWNLOAD_URL=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
+      --jq '.download_url' 2>/dev/null); then
+      :
+    else
+      DOWNLOAD_URL=""
+    fi
+
+    if [[ -n "$DOWNLOAD_URL" && "$DOWNLOAD_URL" != "null" && "$DOWNLOAD_URL" != *"Not Found"* ]]; then
+      mkdir -p "$SKILL_DIR"
+      gh api "repos/$REPO/contents/$SKILL_PATH" \
+        --jq '.content' \
+        | base64 --decode > "$SKILL_FILE"
+
+      if [[ -s "$SKILL_FILE" ]]; then
+        echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
+        FOUND=1
+        break 2
+      else
+        rm -f "$SKILL_FILE"
+      fi
+    fi
+  done
+done
+
+if [[ "$FOUND" -eq 0 ]]; then
+  echo ""
+  echo "✗ Could not find skill: $SKILL_NAME"
+  echo "  Searched: ${REPOS[*]}"
+  echo ""
+  echo "Stop here. Ask the human how to proceed before continuing."
+  exit 1
+fi
+```
+
+---
+
 ## Init Script
 
 **File:** `init-simple-project.sh`
 
-A single script that creates the project from this spec.
-Lives in the agentworks-spec repo alongside the build spec.
+Run from inside a freshly created, empty directory. Scaffolds everything into
+the current directory. Project name is derived from the directory name.
+Skills are NOT pre-copied — fetched from GitHub by Claude Code at runtime.
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
+PROJECT_NAME="$(basename "$PWD")"
+
 echo ""
-echo "Create new project"
+echo "Initialising project: $PROJECT_NAME"
 echo ""
 
-read -rp "Project name: " PROJECT_NAME
 read -rp "Project description: " DESCRIPTION
 
-if [[ -z "$PROJECT_NAME" ]]; then
-  echo "Error: project name is required" && exit 1
-fi
-
-if [[ -d "$PROJECT_NAME" ]]; then
-  echo "Error: directory $PROJECT_NAME already exists" && exit 1
+if [[ -n "$(ls -A . 2>/dev/null)" ]]; then
+  echo "Error: directory is not empty. Run this from a fresh directory." && exit 1
 fi
 
 # ── Create structure ──────────────────────────────────────────────────────────
-mkdir -p "$PROJECT_NAME"/{src,docs,tests}
-mkdir -p "$PROJECT_NAME/.agents/skills"/{brainstorm,identify-and-install-skills,plan-work,review-output,commit-and-push}
+mkdir -p {src,docs,tests}
+mkdir -p .agents/skills
 
-SPEC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ── Write fetch-skill.sh ────────────────────────────────────────────────────
+cat > .agents/fetch-skill.sh << 'FETCHEOF'
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Copy skill files from this spec repo
-for SKILL in brainstorm identify-and-install-skills plan-work review-output commit-and-push; do
-  if [[ -f "$SPEC_DIR/skills/$SKILL/SKILL.md" ]]; then
-    cp "$SPEC_DIR/skills/$SKILL/SKILL.md" \
-       "$PROJECT_NAME/.agents/skills/$SKILL/SKILL.md"
-  fi
+SKILL_NAME="${1:-}"
+SPECIFIC_REPO="${2:-}"
+
+if [[ -z "$SKILL_NAME" ]]; then
+  echo "Error: skill name required" && exit 1
+fi
+
+SKILL_DIR=".agents/skills/$SKILL_NAME"
+SKILL_FILE="$SKILL_DIR/SKILL.md"
+
+if [[ -f "$SKILL_FILE" ]]; then
+  echo "✓ $SKILL_NAME already installed, skipping"
+  exit 0
+fi
+
+REPOS=(
+  "anthropics/skills"
+  "obra/superpowers"
+)
+
+if [[ -n "$SPECIFIC_REPO" ]]; then
+  REPOS=("$SPECIFIC_REPO")
+fi
+
+FOUND=0
+
+for REPO in "${REPOS[@]}"; do
+  echo "→ Checking $REPO for skill: $SKILL_NAME"
+
+  for SKILL_PATH in \
+    "skills/$SKILL_NAME/SKILL.md" \
+    "$SKILL_NAME/SKILL.md" \
+    "skills/$SKILL_NAME/skill.md" \
+    "$SKILL_NAME/skill.md"
+  do
+    DOWNLOAD_URL=""
+    if DOWNLOAD_URL=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
+      --jq '.download_url' 2>/dev/null); then
+      :
+    else
+      DOWNLOAD_URL=""
+    fi
+
+    if [[ -n "$DOWNLOAD_URL" && "$DOWNLOAD_URL" != "null" && "$DOWNLOAD_URL" != *"Not Found"* ]]; then
+      mkdir -p "$SKILL_DIR"
+      gh api "repos/$REPO/contents/$SKILL_PATH" \
+        --jq '.content' \
+        | base64 --decode > "$SKILL_FILE"
+
+      if [[ -s "$SKILL_FILE" ]]; then
+        echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
+        FOUND=1
+        break 2
+      else
+        rm -f "$SKILL_FILE"
+      fi
+    fi
+  done
 done
 
+if [[ "$FOUND" -eq 0 ]]; then
+  echo ""
+  echo "✗ Could not find skill: $SKILL_NAME"
+  echo "  Searched: ${REPOS[*]}"
+  echo ""
+  echo "Stop here. Ask the human how to proceed before continuing."
+  exit 1
+fi
+FETCHEOF
+
+chmod +x .agents/fetch-skill.sh
+
 # ── Write AGENTS.md ───────────────────────────────────────────────────────────
+cat > AGENTS.md << 'AGENTSEOF'
+# AGENTS.md
+
+## What this repo is
+{{PROJECT_DESCRIPTION}}
+
+## Workflow
+
+Every task follows this sequence. Do not skip steps.
+
+### 0. Boot
+Before doing anything else:
+
+1. **Refresh the Skill Catalog.** Run:
+   ```bash
+   gh api repos/anthropics/skills/git/trees/HEAD:skills --jq '.tree[].path' 2>/dev/null
+   gh api repos/obra/superpowers/git/trees/HEAD:skills --jq '.tree[].path' 2>/dev/null
+   ```
+   Compare the output with the Skill Catalog section below. If new skills
+   appear that are not in the catalog, add them. If listed skills are gone,
+   remove them. Tell the human what changed (if anything).
+
+2. **Fetch the brainstorming skill.** Check whether .agents/skills/brainstorming/SKILL.md exists.
+   If it does not exist, run:
+   ```bash
+   bash .agents/fetch-skill.sh brainstorming obra/superpowers
+   ```
+
+Do not proceed until both steps are complete.
+
+### 1. Brainstorm
+Read .agents/skills/brainstorming/SKILL.md and run it.
+Do not write any code until brainstorm is complete and the human approves
+the direction.
+
+### 2. Identify and fetch skills
+Based on the brainstorm outcome, consult the Skill Catalog below to identify
+which additional skills are needed for this task.
+
+For each skill needed:
+```bash
+bash .agents/fetch-skill.sh <skill-name> <repo-slug>
+```
+
+Always fetch `writing-plans` from `obra/superpowers` — it is required for step 3.
+
+Tell the human which skills you fetched and which (if any) were not found.
+Do not proceed until the human confirms.
+
+### 3. Plan
+Fetch the planning skill if not already present:
+```bash
+bash .agents/fetch-skill.sh writing-plans obra/superpowers
+```
+
+Read .agents/skills/writing-plans/SKILL.md.
+Produce a written plan in docs/plan.md before touching any code.
+Wait for human approval before proceeding.
+
+### 4. Implement
+Follow the approved plan. Work in small committed steps.
+Ask before making decisions not covered by the plan.
+
+### 5. Review
+Review all changed code against docs/plan.md and acceptance criteria.
+
+Categorize every issue found:
+- **Auto-fix** — obvious bugs, typos, formatting, missing imports.
+  Fix these immediately without asking.
+- **Human review required** — logic errors, architectural decisions,
+  unclear requirements, anything with more than one reasonable solution.
+  List these clearly and STOP.
+
+Fix all auto-fix issues. If human-review issues exist, print a numbered
+list and stop. If no issues remain, print "Review passed. Ready to commit."
+
+### 6. Commit and push
+1. Verify the current branch is NOT main. If on main, create a task branch first.
+2. Run a final check — no .env files staged, no secrets in diff.
+3. Stage all changed files: `git add -A`
+4. Write a Conventional Commits message: `<type>(<scope>): <description>`
+5. Commit and push: `git commit -m "<message>" && git push origin HEAD`
+6. Print summary: branch, commit message, files changed, next action.
+
+## Skill Catalog
+
+Available skills that can be fetched on demand. Use `bash .agents/fetch-skill.sh <name> <repo>`.
+
+### Development Process — obra/superpowers
+
+| Skill | Description |
+|---|---|
+| brainstorming | Interactive brainstorming before any code |
+| writing-plans | Write implementation plans with full context |
+| executing-plans | Execute written plans with review checkpoints |
+| test-driven-development | Write test first, watch it fail, write code to pass |
+| systematic-debugging | Root cause investigation before any fix |
+| requesting-code-review | Dispatch code-reviewer subagent |
+| receiving-code-review | Handle review feedback with technical rigor |
+| verification-before-completion | Evidence before completion claims |
+| dispatching-parallel-agents | Concurrent agents for independent tasks |
+| subagent-driven-development | Fresh subagent per task with two-stage review |
+| finishing-a-development-branch | Merge, PR, or cleanup options |
+| using-git-worktrees | Isolated git worktrees for feature work |
+| writing-skills | Create or edit skills with TDD methodology |
+
+### Documents & Media — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| docx | Word documents |
+| pdf | PDF processing, creation, OCR |
+| pptx | PowerPoint files |
+| xlsx | Spreadsheets, formulas, charts |
+| doc-coauthoring | Co-authoring workflow |
+| internal-comms | Internal communications |
+
+### Design & Frontend — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| frontend-design | Production-grade frontend interfaces |
+| canvas-design | Visual art in PNG/PDF |
+| web-artifacts-builder | Multi-component HTML artifacts |
+| theme-factory | Styling with themes |
+| brand-guidelines | Brand colors and typography |
+| algorithmic-art | Generative art with p5.js |
+| slack-gif-creator | Animated GIFs for Slack |
+
+### Development Tools — anthropics/skills
+
+| Skill | Description |
+|---|---|
+| claude-api | Claude API / Anthropic SDK |
+| mcp-builder | MCP server creation |
+| webapp-testing | Playwright web testing |
+| skill-creator | Skill creation and measurement |
+
+## Rules
+
+- Never commit directly to main during active work — use a task branch
+- Never push without running the review step first
+- Never make architectural decisions without asking first
+- Always write docs/plan.md before writing code
+- Keep .agents/skills/ in sync — if you use a skill, it must be fetched
+- Never copy skill content from memory — always fetch from the repos
+- When fetching skills, always specify the repo slug (e.g. obra/superpowers)
+
+## Done criteria
+
+A task is done when:
+- All planned features are implemented
+- Review passes with no unresolved issues
+- Changes are committed and pushed
+- docs/plan.md reflects what was actually built
+AGENTSEOF
+
+# ── Write README.md ───────────────────────────────────────────────────────────
+cat > README.md << 'READMEEOF'
+# {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Getting started
+
+1. Open Claude Code in this directory
+2. Describe what you want to build
+3. Claude Code fetches the brainstorming skill, brainstorms with you,
+   fetches any additional skills needed, plans, implements, reviews, and commits
+
+## Workflow
+
+See AGENTS.md for the full workflow Claude Code follows.
+
+## How skills work
+
+Skills are fetched on demand from GitHub using `gh` CLI:
+
+```bash
+bash .agents/fetch-skill.sh <skill-name> <repo-slug>
+```
+
+Sources:
+- https://github.com/anthropics/skills
+- https://github.com/obra/superpowers
+
+See the Skill Catalog in AGENTS.md for all available skills.
+READMEEOF
+
+# ── Write .gitignore ──────────────────────────────────────────────────────────
+cat > .gitignore << 'IGNOREEOF'
+.env
+.env.local
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+IGNOREEOF
+
+# ── Substitute placeholders ───────────────────────────────────────────────────
 export _NAME="$PROJECT_NAME"
-export _DESC="$DESCRIPTION"
+export _DESC="${DESCRIPTION:-A project built with Claude Code.}"
 
 python3 - << 'PYEOF'
 import os, pathlib
 
-project = pathlib.Path(os.environ["_NAME"])
-desc = os.environ["_DESC"] or "A project built with Claude Code."
+project = pathlib.Path(".")
+desc = os.environ["_DESC"]
+name = os.environ["_NAME"]
 
 for path in project.rglob("*"):
     if not path.is_file():
         continue
     try:
         text = path.read_text(encoding="utf-8")
-        new = text.replace("{{PROJECT_NAME}}", os.environ["_NAME"])
+        new = text.replace("{{PROJECT_NAME}}", name)
         new = new.replace("{{PROJECT_DESCRIPTION}}", desc)
         if new != text:
             path.write_text(new, encoding="utf-8")
     except (UnicodeDecodeError, PermissionError):
         pass
-
-unset _NAME _DESC 2>/dev/null || true
 PYEOF
 
+unset _NAME _DESC 2>/dev/null || true
+
 # ── Git ───────────────────────────────────────────────────────────────────────
-cd "$PROJECT_NAME"
 git init -q
 git add .
 git commit -q -m "feat: initial project scaffold" 2>/dev/null || {
@@ -481,43 +792,50 @@ git commit -q -m "feat: initial project scaffold" 2>/dev/null || {
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
-echo "✓ Project created: $PROJECT_NAME/"
+echo "✓ $PROJECT_NAME initialised"
 echo ""
-echo "Next steps:"
-echo "  cd $PROJECT_NAME"
+echo "Next:"
 echo "  claude"
-echo "  # Describe what you want to build — Claude Code takes it from there"
+echo "  # Claude Code will fetch skills from GitHub as needed"
 ```
 
 ---
 
-## Skill files on disk
+## Updating the Skill Catalog
 
-The init script copies skills from `skills/` in the spec repo.
-Create these files alongside `init-simple-project.sh`:
+The skill catalog in AGENTS.md is a snapshot. Upstream repos may add new skills.
+To refresh, run these commands and compare with the catalog:
 
-```
-agentworks-spec/
-├── agentworks-build-spec.md
-├── claude-code-bootstrap.md
-├── codex-cli-bootstrap.md
-├── README.md
-├── init-simple-project.sh          ← NEW
-└── skills/                         ← NEW
-    ├── brainstorm/
-    │   └── SKILL.md
-    ├── identify-and-install-skills/
-    │   └── SKILL.md
-    ├── plan-work/
-    │   └── SKILL.md
-    ├── review-output/
-    │   └── SKILL.md
-    └── commit-and-push/
-        └── SKILL.md
+```bash
+# List anthropics/skills
+gh api repos/anthropics/skills/git/trees/HEAD:skills --jq '.tree[].path'
+
+# List obra/superpowers
+gh api repos/obra/superpowers/git/trees/HEAD:skills --jq '.tree[].path'
+
+# Read a specific skill's description
+gh api repos/<org>/<repo>/contents/skills/<skill-name>/SKILL.md \
+  --jq '.content' | base64 --decode | head -20
 ```
 
-The SKILL.md content for each is defined in the Skills section above.
-These are the same files that get copied into every new project.
+Add any new skills to the catalog tables in both this spec and the
+AGENTS.md template in the init script. Remove skills that no longer exist.
+
+---
+
+## Repo structure
+
+The spec repo only needs two files — no `skills/` folder required:
+
+```
+simple-project-starter/
+├── simple-project-starter-spec.md
+├── init-simple-project.sh
+└── README.md
+```
+
+Skills live in the upstream repos. The init script ships `fetch-skill.sh`
+into every project so Claude Code can pull them at runtime.
 
 ---
 
@@ -525,12 +843,15 @@ These are the same files that get copied into every new project.
 
 The build is complete when these files exist and are non-empty:
 
-- `skills/brainstorm/SKILL.md` — contains "one focused question at a time"
-- `skills/identify-and-install-skills/SKILL.md` — contains all four skill source URLs
-- `skills/plan-work/SKILL.md` — contains "docs/plan.md"
-- `skills/review-output/SKILL.md` — contains "Auto-fix" and "Human review required"
-- `skills/commit-and-push/SKILL.md` — contains "Conventional Commits"
-- `init-simple-project.sh` — is executable, contains all five skill names
+- `init-simple-project.sh` — is executable, contains `fetch-skill.sh` write block
+- Running `bash init-simple-project.sh` produces a project with:
+  - `.agents/fetch-skill.sh` — executable, contains both repo URLs
+  - `AGENTS.md` — contains "Boot", "fetch-skill.sh", and "Skill Catalog"
+  - `README.md` — contains project name and description
+  - `.gitignore`
+
+After validation, ask the human:
+> "Ready. What would you like to build? Give me your project name and a short description."
 
 ---
 
@@ -539,21 +860,24 @@ The build is complete when these files exist and are non-empty:
 ### Create a new project
 
 ```bash
-cd agentworks-spec
-bash init-simple-project.sh
+mkdir my-project
+cd my-project
+bash /path/to/init-simple-project.sh
 ```
+
+The script scaffolds into the **current directory**. The project name is
+taken from the directory name — no subdirectory is created.
 
 ### Then
 
 ```bash
-cd <project-name>
 claude
 ```
 
 Tell Claude Code what you want to build.
-It reads AGENTS.md, runs brainstorm, installs needed skills,
-plans, implements, reviews, and commits. You stay in the loop at
-every decision point.
+It reads AGENTS.md, fetches the brainstorming skill, brainstorms with you,
+fetches any additional skills needed, plans, implements, reviews, and commits.
+You stay in the loop at every decision point.
 
 ---
 
@@ -562,5 +886,3 @@ every decision point.
 - Not an autonomous pipeline — you are always in the loop
 - Not a Python runtime — no hooks, no IterationState, no model config
 - Not a framework — just markdown files Claude Code reads
-
-For autonomous pipelines, see agentworks-build-spec.md.
