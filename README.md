@@ -1,6 +1,6 @@
-# simple-project-starter
+# skillflow
 
-A minimal starter for human-in-the-loop Claude Code projects.
+Agentic skill-based project workflows made easy.
 
 No autonomous pipelines. No Python runtime. Just markdown files Claude Code reads and follows.
 
@@ -10,10 +10,10 @@ No autonomous pipelines. No Python runtime. Just markdown files Claude Code read
 
 | File | Purpose |
 |---|---|
-| `simple-project-starter-spec.md` | Build spec — Claude Code reads this and builds the starter |
+| `skillflow-spec.md` | Build spec — Claude Code reads this and builds the starter |
 | `fetch-skill.sh` | Skill fetcher with safety scanner (single source of truth) |
 | `skill-catalog.md` | Categorized skill catalog (single source of truth) |
-| `init-simple-project.sh` | Script to create a new project (created by running the spec) |
+| `init-project.sh` | Script to create a new project (created by running the spec) |
 
 ---
 
@@ -22,10 +22,10 @@ No autonomous pipelines. No Python runtime. Just markdown files Claude Code read
 Open Claude Code in this directory and say:
 
 ```
-Read simple-project-starter-spec.md and execute it.
+Read skillflow-spec.md and execute it.
 ```
 
-Claude Code creates `init-simple-project.sh`.
+Claude Code creates `init-project.sh`.
 
 ---
 
@@ -34,7 +34,7 @@ Claude Code creates `init-simple-project.sh`.
 ```bash
 mkdir my-project
 cd my-project
-bash /path/to/init-simple-project.sh
+bash /path/to/init-project.sh
 claude
 ```
 
@@ -44,7 +44,7 @@ Tell Claude Code what you want to build. It handles the rest.
 
 ## Workflow every project follows
 
-1. **Boot** — refreshes the skill catalog from upstream, fetches brainstorming skill
+1. **Boot** — refreshes the skill catalog from upstream, fetches and updates skills
 2. **Brainstorm** — shapes your idea before any code
 3. **Identify and fetch skills** — auto-fetches required skills (writing-plans, TDD, code review, verification, dev-engineering), plus any task-specific ones
 4. **Plan** — writes docs/plan.md, waits for your approval
