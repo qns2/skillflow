@@ -104,18 +104,28 @@ Do not write any code until brainstorm is complete and the human approves
 the direction.
 
 ### 2. Identify and fetch skills
-First, auto-fetch the required skills for any code task:
 
+**Always required (every task):**
 ```bash
 bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
+```
+
+**If the task involves writing code, also fetch:**
+```bash
 bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
 bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
 bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
 ```
 
+**If the task involves research, documents, or business planning, also fetch:**
+```bash
+bash .agents/fetch-skill.sh research-knowledge-super-skill get-zeked/research-knowledge-super-skill --refresh
+bash .agents/fetch-skill.sh doc-coauthoring anthropics/skills --refresh
+```
+
 Then consult .agents/skill-catalog.md for any additional skills needed
-for this specific task (e.g. frontend-design, xlsx, pdf).
+for this specific task (e.g. frontend-design, xlsx, pdf, finance-super-skill).
 
 For each additional skill:
 ```bash
@@ -308,18 +318,28 @@ Do not write any code until brainstorm is complete and the human approves
 the direction.
 
 ### 2. Identify and fetch skills
-First, auto-fetch the required skills for any code task:
 
+**Always required (every task):**
 ```bash
 bash .agents/fetch-skill.sh writing-plans obra/superpowers --refresh
+bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
+```
+
+**If the task involves writing code, also fetch:**
+```bash
 bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
 bash .agents/fetch-skill.sh requesting-code-review obra/superpowers --refresh
-bash .agents/fetch-skill.sh verification-before-completion obra/superpowers --refresh
 bash .agents/fetch-skill.sh dev-engineering-super-skill get-zeked/dev-engineering-super-skill --refresh
 ```
 
+**If the task involves research, documents, or business planning, also fetch:**
+```bash
+bash .agents/fetch-skill.sh research-knowledge-super-skill get-zeked/research-knowledge-super-skill --refresh
+bash .agents/fetch-skill.sh doc-coauthoring anthropics/skills --refresh
+```
+
 Then consult .agents/skill-catalog.md for any additional skills needed
-for this specific task (e.g. frontend-design, xlsx, pdf).
+for this specific task (e.g. frontend-design, xlsx, pdf, finance-super-skill).
 
 For each additional skill:
 ```bash
