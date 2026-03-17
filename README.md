@@ -10,7 +10,9 @@ No autonomous pipelines. No Python runtime. Just markdown files Claude Code read
 
 | File | Purpose |
 |---|---|
-| `simple-project-starter-spec.md` | Full spec — Claude Code reads this and builds the starter |
+| `simple-project-starter-spec.md` | Build spec — Claude Code reads this and builds the starter |
+| `fetch-skill.sh` | Skill fetcher with safety scanner (single source of truth) |
+| `skill-catalog.md` | Categorized skill catalog (single source of truth) |
 | `init-simple-project.sh` | Script to create a new project (created by running the spec) |
 
 ---
@@ -60,7 +62,7 @@ Skills are fetched on demand from:
 - https://github.com/obra/superpowers
 - https://github.com/get-zeked (standalone skill repos)
 
-See the Skill Catalog in `simple-project-starter-spec.md` for all available skills.
+See `skill-catalog.md` for all available skills.
 
 ---
 

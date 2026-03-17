@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   bash .agents/fetch-skill.sh <skill-name>
+#   bash .agents/fetch-skill.sh <skill-name> <org/repo>   # search specific repo only
+
+SKILL_NAME="${1:-}"
+SPECIFIC_REPO="${2:-}"
+
+if [[ -z "$SKILL_NAME" ]]; then
+  echo "Error: skill name required" && exit 1
+fi
+
+SKILL_DIR=".agents/skills/$SKILL_NAME"
+SKILL_FILE="$SKILL_DIR/SKILL.md"
+
+if [[ -f "$SKILL_FILE" ]]; then
+  echo "✓ $SKILL_NAME already installed, skipping"
+  exit 0
+fi
+
+REPOS=(
+  "anthropics/skills"
+  "obra/superpowers"
+)
+
+if [[ -n "$SPECIFIC_REPO" ]]; then
+  REPOS=("$SPECIFIC_REPO")
+fi
+
+FOUND=0
+
+for REPO in "${REPOS[@]}"; do
+  echo "→ Checking $REPO for skill: $SKILL_NAME"
+
+  for SKILL_PATH in \
+    "skills/$SKILL_NAME/SKILL.md" \
+    "$SKILL_NAME/SKILL.md" \
+    "SKILL.md" \
+    "skills/$SKILL_NAME/skill.md" \
+    "$SKILL_NAME/skill.md" \
+    "skill.md"
+  do
+    DOWNLOAD_URL=""
+    if DOWNLOAD_URL=$(gh api "repos/$REPO/contents/$SKILL_PATH" \
+      --jq '.download_url' 2>/dev/null); then
+      :
+    else
+      DOWNLOAD_URL=""
+    fi
+
+    if [[ -n "$DOWNLOAD_URL" && "$DOWNLOAD_URL" != "null" && "$DOWNLOAD_URL" != *"Not Found"* ]]; then
+      mkdir -p "$SKILL_DIR"
+      gh api "repos/$REPO/contents/$SKILL_PATH" \
+        --jq '.content' \
+        | base64 --decode > "$SKILL_FILE"
+
+      if [[ -s "$SKILL_FILE" ]]; then
+        # ── Safety scan ──────────────────────────────────────────────
+        WARNINGS=""
+
+        # Network exfiltration (actual invocations, not doc references)
+        if grep -iE '^\s*(curl|wget|nc|netcat)\s+(http|ftp|\$|`)|`(curl|wget|nc|netcat)\s+(http|ftp|\$|`)|\$\((curl|wget|nc|netcat)\s' "$SKILL_FILE" 2>/dev/null \
+          | grep -qivE 'github\.com|anthropic|example\.com|localhost|127\.0\.0\.1'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains network commands (curl/wget/nc) targeting non-standard URLs\n"
+        fi
+
+        # Credential/secret access
+        if grep -qiE '\.env\b|credentials|\.ssh/|private.key|secret.key|api.key|token.*=|password.*=' "$SKILL_FILE" 2>/dev/null; then
+          if grep -iE '\.env\b|credentials|\.ssh/|private.key|secret.key' "$SKILL_FILE" 2>/dev/null | grep -qiE 'read|cat|source|export|send|upload|curl|post'; then
+            WARNINGS="${WARNINGS}  ⚠ References reading or transmitting credentials/secrets\n"
+          fi
+        fi
+
+        # Destructive file operations (exclude harmless patterns)
+        if grep -iE 'rm\s+-rf\s+[~/\*]|rm\s+-rf\s+\$|shred' "$SKILL_FILE" 2>/dev/null \
+          | grep -qivE 'rm\s+-rf\s+\$SKILL_DIR|rm\s+-f\s+\$SKILL_FILE'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains destructive file operations (rm -rf with broad paths)\n"
+        fi
+
+        # Base64 encode + send pattern (data exfiltration)
+        if grep -qiE 'base64.*curl|base64.*wget|base64.*nc\b|encode.*send|encode.*post' "$SKILL_FILE" 2>/dev/null; then
+          WARNINGS="${WARNINGS}  ⚠ Contains base64 encode + network send pattern (possible exfiltration)\n"
+        fi
+
+        # Disable safety (exclude anti-pattern docs and non-safety contexts)
+        if grep -iE 'skip.*(code review|safety review|security review|all review|all test|every test)|disable.*safety|ignore.*warning|--no-verify|bypass.*(safety|security|check|verification)' "$SKILL_FILE" 2>/dev/null \
+          | grep -ivE 'never|don.t|do not|must not|should not|prohibited|anti.pattern|common mistake|"skip|rationalization|^\s*-\s*skip|^\*\*skip' \
+          | grep -qiE 'skip|disable|ignore|bypass|--no-verify'; then
+          WARNINGS="${WARNINGS}  ⚠ Contains instructions to skip safety checks or reviews\n"
+        fi
+
+        # Eval/exec injection
+        if grep -qiE '^\s*eval\b|\beval\s*\(|\bexec\s*\(' "$SKILL_FILE" 2>/dev/null; then
+          WARNINGS="${WARNINGS}  ⚠ Contains eval/exec calls (code injection risk)\n"
+        fi
+
+        if [[ -n "$WARNINGS" ]]; then
+          echo ""
+          echo "⚠ SAFETY WARNINGS for $SKILL_NAME:"
+          echo -e "$WARNINGS"
+          echo "  Source: $REPO ($SKILL_PATH)"
+          echo "  File saved to: $SKILL_FILE"
+          echo ""
+          echo "  Review the skill content before proceeding."
+          echo "  To remove: rm -r $SKILL_DIR"
+          echo ""
+        else
+          echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
+        fi
+
+        FOUND=1
+        break 2
+      else
+        rm -f "$SKILL_FILE"
+      fi
+    fi
+  done
+done
+
+if [[ "$FOUND" -eq 0 ]]; then
+  echo ""
+  echo "✗ Could not find skill: $SKILL_NAME"
+  echo "  Searched: ${REPOS[*]}"
+  echo ""
+  echo "Stop here. Ask the human how to proceed before continuing."
+  exit 1
+fi
