@@ -66,6 +66,39 @@ See `skill-catalog.md` for all available skills.
 
 ---
 
+## Skill versioning
+
+Every skill install is recorded to `.agents/skills.json` with repo, SHA, and timestamp — giving you full visibility into what version you're running.
+
+### Checking for updates
+
+```bash
+bash .agents/fetch-skill.sh <skill-name> <repo> --refresh
+```
+
+Compares your local SHA with upstream. Re-fetches only if changed.
+
+### Pinning versions
+
+When your skills work well together, freeze them:
+
+```bash
+bash .agents/fetch-skill.sh --freeze    # lock current versions
+```
+
+While frozen:
+- Fetches use the exact pinned SHA — no silent drift
+- `--refresh` is blocked (tells you to thaw first)
+- New project members get the same skill versions
+
+To unfreeze:
+
+```bash
+bash .agents/fetch-skill.sh --thaw      # back to floating latest
+```
+
+---
+
 ## Skill safety scanning
 
 Every skill downloaded by `fetch-skill.sh` is automatically scanned before installation. The scanner checks for:
