@@ -6,6 +6,33 @@ set -euo pipefail
 #   bash .agents/fetch-skill.sh <skill-name> <org/repo>
 #   bash .agents/fetch-skill.sh <skill-name> <org/repo> --refresh   # check for updates
 
+MANIFEST=".agents/skills.json"
+
+# Record skill install to manifest for observability
+record_install() {
+  local name="$1" repo="$2" path="$3" sha="$4"
+  local date
+  date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  local entry
+  entry=$(printf '{"repo":"%s","path":"%s","sha":"%s","fetched_at":"%s"}' "$repo" "$path" "$sha" "$date")
+
+  if [[ -f "$MANIFEST" ]]; then
+    # Update or add entry using python (available everywhere, no jq dependency for writing)
+    python3 -c "
+import json, sys
+with open('$MANIFEST') as f: data = json.load(f)
+data['$name'] = json.loads('$entry')
+with open('$MANIFEST', 'w') as f: json.dump(data, f, indent=2)
+"
+  else
+    python3 -c "
+import json
+data = {'$name': json.loads('$entry')}
+with open('$MANIFEST', 'w') as f: json.dump(data, f, indent=2)
+"
+  fi
+}
+
 SKILL_NAME="${1:-}"
 SPECIFIC_REPO="${2:-}"
 REFRESH=0
@@ -178,6 +205,10 @@ for REPO in "${REPOS[@]}"; do
         else
           echo "✓ Installed $SKILL_NAME from $REPO ($SKILL_PATH)"
         fi
+
+        # Record to manifest
+        INSTALLED_SHA=$(cat "$SHA_FILE" 2>/dev/null || echo "unknown")
+        record_install "$SKILL_NAME" "$REPO" "$SKILL_PATH" "$INSTALLED_SHA"
 
         FOUND=1
         break 2
