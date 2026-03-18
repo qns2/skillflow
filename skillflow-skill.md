@@ -13,7 +13,31 @@ Skills are fetched on demand from upstream repos (anthropics/skills, obra/superp
 
 ## Step 0: Boot
 
-Every session starts here. Fetch or refresh the 3 core dev skills:
+Every session starts here.
+
+### Bootstrap (first run only)
+
+If `.agents/fetch-skill.sh` does not exist, the project hasn't been set up yet.
+Bootstrap by fetching the required files from the skillflow repo:
+
+```bash
+mkdir -p .agents/skills docs/summaries src tests
+
+# Fetch fetch-skill.sh
+gh api repos/qns2/skillflow/contents/fetch-skill.sh --jq '.content' | base64 --decode > .agents/fetch-skill.sh
+chmod +x .agents/fetch-skill.sh
+
+# Fetch skill-catalog.md
+gh api repos/qns2/skillflow/contents/skill-catalog.md --jq '.content' | base64 --decode > .agents/skill-catalog.md
+
+# Fetch skill-scenarios.md
+gh api repos/qns2/skillflow/contents/skill-scenarios.md --jq '.content' | base64 --decode > .agents/skill-scenarios.md
+```
+
+If any of these fail, tell the human: "I need the skillflow support files. Run:
+`git clone https://github.com/qns2/skillflow.git && bash skillflow/init-project.sh`"
+
+### Fetch core skills
 
 ```bash
 bash .agents/fetch-skill.sh test-driven-development obra/superpowers --refresh
