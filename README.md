@@ -6,36 +6,13 @@ No autonomous pipelines. No Python runtime. Just markdown files Claude Code read
 
 ---
 
-## What is in this repo
-
-| File | Purpose |
-|---|---|
-| `skillflow-spec.md` | Build spec — Claude Code reads this and builds the starter |
-| `fetch-skill.sh` | Skill fetcher with safety scanner (single source of truth) |
-| `skill-catalog.md` | Categorized skill catalog (single source of truth) |
-| `skill-scenarios.md` | Standard scenario mappings with checkpoint criteria |
-| `init-project.sh` | Script to create a new project (created by running the spec) |
-
----
-
-## First time setup
-
-Open Claude Code in this directory and say:
-
-```
-Read skillflow-spec.md and execute it.
-```
-
-Claude Code creates `init-project.sh`.
-
----
-
-## Create a new project
+## Quick start
 
 ```bash
 mkdir my-project
 cd my-project
-bash /path/to/init-project.sh
+git clone https://github.com/qns2/skillflow.git
+bash skillflow/init-project.sh
 claude
 ```
 
@@ -43,15 +20,53 @@ Tell Claude Code what you want to build. It handles the rest.
 
 ---
 
+## What is in this repo
+
+| File | Purpose |
+|---|---|
+| `init-project.sh` | Scaffolds a new project in the parent directory |
+| `fetch-skill.sh` | Skill fetcher with safety scanner |
+| `skill-catalog.md` | Categorized skill catalog |
+| `skill-scenarios.md` | Standard scenario mappings with checkpoint criteria |
+| `skillflow-spec.md` | Full spec and documentation |
+
+---
+
+## How it works
+
+1. Clone skillflow inside your project folder
+2. Run `init-project.sh` — it creates AGENTS.md, copies tools into `.agents/`, sets up the structure
+3. Open Claude Code — it reads AGENTS.md and follows the workflow
+4. Update skillflow anytime: `cd skillflow && git pull`
+
+### Project structure after init
+
+```
+my-project/
+├── skillflow/              ← this repo (gitignored)
+├── AGENTS.md               ← project workflow
+├── .agents/
+│   ├── fetch-skill.sh      ← skill fetcher + safety scanner
+│   ├── skill-catalog.md    ← available skills
+│   ├── skill-scenarios.md  ← scenario mappings + checkpoints
+│   └── skills/             ← fetched at runtime
+├── src/
+├── docs/
+└── tests/
+```
+
+---
+
 ## Workflow every project follows
 
-1. **Boot** — refreshes the skill catalog from upstream, fetches and updates skills
-2. **Brainstorm** — shapes your idea before any code
-3. **Identify and fetch skills** — auto-fetches required skills (writing-plans, TDD, code review, verification, dev-engineering), plus any task-specific ones
+1. **Boot** — refreshes skill catalog, fetches brainstorming skill
+2. **Brainstorm** — shapes your idea before any work
+3. **Identify and fetch skills** — matches task to a scenario, fetches required skills, reads them, presents checkpoint criteria
 4. **Plan** — writes docs/plan.md, waits for your approval
 5. **Implement** — follows the plan
-6. **Review** — fixes obvious bugs, flags the rest for you
-7. **Commit and push** — conventional commits, summary printed
+6. **Checkpoint** — self-evaluates skill compliance with evidence
+7. **Review** — fixes obvious bugs, flags the rest for you
+8. **Commit and push** — conventional commits, summary printed
 
 ---
 
@@ -63,40 +78,7 @@ Skills are fetched on demand from:
 - https://github.com/obra/superpowers
 - https://github.com/get-zeked (standalone skill repos)
 
-See `skill-catalog.md` for all available skills.
-
----
-
-## Skill versioning
-
-Every skill install is recorded to `.agents/skills.json` with repo, SHA, and timestamp — giving you full visibility into what version you're running.
-
-### Checking for updates
-
-```bash
-bash .agents/fetch-skill.sh <skill-name> <repo> --refresh
-```
-
-Compares your local SHA with upstream. Re-fetches only if changed.
-
-### Pinning versions
-
-When your skills work well together, freeze them:
-
-```bash
-bash .agents/fetch-skill.sh --freeze    # lock current versions
-```
-
-While frozen:
-- Fetches use the exact pinned SHA — no silent drift
-- `--refresh` is blocked (tells you to thaw first)
-- New project members get the same skill versions
-
-To unfreeze:
-
-```bash
-bash .agents/fetch-skill.sh --thaw      # back to floating latest
-```
+See `skill-catalog.md` for all available skills and `skill-scenarios.md` for standard task-to-skill mappings.
 
 ---
 
@@ -113,13 +95,27 @@ Every skill downloaded by `fetch-skill.sh` is automatically scanned before insta
 
 If warnings are found, the skill is still saved to disk but the scanner prints the warnings and asks you to review the content before proceeding. To remove a flagged skill: `rm -r .agents/skills/<skill-name>`.
 
+---
+
+## Skill versioning
+
+Every skill install is recorded to `.agents/skills.json` with repo, SHA, and timestamp.
+
+```bash
+# Check for updates
+bash .agents/fetch-skill.sh <skill-name> <repo> --refresh
+
+# Lock current versions
+bash .agents/fetch-skill.sh --freeze
+
+# Unlock
+bash .agents/fetch-skill.sh --thaw
+```
+
+---
+
 ### Disclaimer
 
-**This scanner is a best-effort heuristic, not a security guarantee.** It uses pattern matching to flag common indicators of malicious intent. It cannot detect:
+**The safety scanner is a best-effort heuristic, not a security guarantee.** It cannot detect obfuscated payloads, indirect exfiltration, prompt injection, or novel attack patterns.
 
-- Obfuscated or encoded payloads
-- Indirect exfiltration via legitimate-looking API calls
-- Prompt injection techniques embedded in skill instructions
-- Novel attack patterns not covered by the current rule set
-
-**You are responsible for reviewing the skills you install.** Only fetch skills from repos you trust. The three default sources (anthropics/skills, obra/superpowers, get-zeked) are community-maintained open-source projects — review their contents and reputation before relying on them. If you add custom skill sources, vet them carefully.
+**You are responsible for reviewing the skills you install.** Only fetch skills from repos you trust.

@@ -1,83 +1,59 @@
-# skillflow — Spec v4
+#!/usr/bin/env bash
+set -euo pipefail
 
-## What This Is
+# Run from the project root (parent of the skillflow/ folder).
+# Usage: bash skillflow/init-project.sh
 
-A minimal project starter for human-in-the-loop Claude Code workflows.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
 
-No autonomous pipelines. No Python runtime machinery. Just:
-- An AGENTS.md that defines the workflow
-- Skills fetched on demand from upstream repos
-- A skill catalog and scenario mappings so Claude Code knows what to use
-- A safety scanner that checks every downloaded skill
+cd "$PROJECT_DIR"
 
-The entire runtime is Claude Code reading markdown files and following them.
+echo ""
+echo "Initialising project: $PROJECT_NAME"
+echo ""
 
----
+# ── Check we're not inside the skillflow repo itself ─────────────────────────
+if [[ -f "skillflow-spec.md" ]]; then
+  echo "Error: you're inside the skillflow repo."
+  echo "Run this from the project root (parent of skillflow/):"
+  echo ""
+  echo "  mkdir my-project"
+  echo "  cd my-project"
+  echo "  git clone https://github.com/qns2/skillflow.git"
+  echo "  bash skillflow/init-project.sh"
+  exit 1
+fi
 
-## How to Use
+# ── Check skillflow folder exists ────────────────────────────────────────────
+if [[ ! -d "skillflow" ]]; then
+  echo "Error: skillflow/ folder not found."
+  echo "Clone it first: git clone https://github.com/qns2/skillflow.git"
+  exit 1
+fi
 
-### 1. Create a project
+# ── Check project isn't already initialised ──────────────────────────────────
+if [[ -f "AGENTS.md" ]]; then
+  echo "Error: AGENTS.md already exists. Project already initialised."
+  exit 1
+fi
 
-```bash
-mkdir my-project
-cd my-project
-git clone https://github.com/qns2/skillflow.git
-bash skillflow/init-project.sh
-```
+read -rp "Project description: " DESCRIPTION
 
-### 2. Start working
+# ── Create structure ──────────────────────────────────────────────────────────
+mkdir -p {src,docs,tests}
+mkdir -p .agents/skills
 
-```bash
-claude
-```
+# ── Copy files from skillflow/ ───────────────────────────────────────────────
+cp skillflow/fetch-skill.sh .agents/fetch-skill.sh
+chmod +x .agents/fetch-skill.sh
 
-Tell Claude Code what you want to build. It reads AGENTS.md, follows the
-workflow, fetches skills as needed, and keeps you in the loop at every step.
+cp skillflow/skill-catalog.md .agents/skill-catalog.md
+cp skillflow/skill-scenarios.md .agents/skill-scenarios.md
 
-### 3. Update skillflow
-
-```bash
-cd skillflow && git pull && cd ..
-```
-
-New skills, scenarios, or scanner updates are immediately available.
-
----
-
-## Folder Structure
-
-After running `init-project.sh`:
-
-```
-my-project/
-├── skillflow/                ← cloned repo (gitignored)
-│   ├── init-project.sh
-│   ├── fetch-skill.sh
-│   ├── skill-catalog.md
-│   ├── skill-scenarios.md
-│   ├── skillflow-spec.md
-│   └── README.md
-├── AGENTS.md                 ← project workflow
-├── README.md                 ← project readme
-├── .gitignore
-├── .agents/
-│   ├── fetch-skill.sh        ← copied from skillflow/
-│   ├── skill-catalog.md      ← copied from skillflow/
-│   ├── skill-scenarios.md    ← copied from skillflow/
-│   └── skills/               ← populated at runtime
-├── src/
-├── docs/
-└── tests/
-```
-
----
-
-## AGENTS.md
-
-The AGENTS.md is the heart of every project. Claude Code reads it first
-on every session.
-
-```markdown
+# ── Write AGENTS.md ───────────────────────────────────────────────────────────
+cat > AGENTS.md << 'AGENTSEOF'
 # AGENTS.md
 
 ## What this repo is
@@ -226,13 +202,10 @@ A task is done when:
 - Review passes with no unresolved issues
 - Changes are committed and pushed
 - docs/plan.md reflects what was actually built
-```
+AGENTSEOF
 
----
-
-## Project README.md
-
-```markdown
+# ── Write README.md ───────────────────────────────────────────────────────────
+cat > README.md << 'READMEEOF'
 # {{PROJECT_NAME}}
 
 {{PROJECT_DESCRIPTION}}
@@ -262,12 +235,61 @@ Sources:
 - https://github.com/get-zeked (standalone skill repos)
 
 See .agents/skill-catalog.md for all available skills.
-```
+READMEEOF
 
----
+# ── Write .gitignore ──────────────────────────────────────────────────────────
+cat > .gitignore << 'IGNOREEOF'
+.env
+.env.local
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+skillflow/
+IGNOREEOF
 
-## What this is NOT
+# ── Substitute placeholders ───────────────────────────────────────────────────
+export _NAME="$PROJECT_NAME"
+export _DESC="${DESCRIPTION:-A project built with Claude Code.}"
 
-- Not an autonomous pipeline — you are always in the loop
-- Not a Python runtime — no hooks, no IterationState, no model config
-- Not a framework — just markdown files Claude Code reads
+python3 - << 'PYEOF'
+import os, pathlib
+
+project = pathlib.Path(".")
+desc = os.environ["_DESC"]
+name = os.environ["_NAME"]
+
+for path in project.rglob("*"):
+    if path.parts[0] == "skillflow":
+        continue
+    if not path.is_file():
+        continue
+    try:
+        text = path.read_text(encoding="utf-8")
+        new = text.replace("{{PROJECT_NAME}}", name)
+        new = new.replace("{{PROJECT_DESCRIPTION}}", desc)
+        if new != text:
+            path.write_text(new, encoding="utf-8")
+    except (UnicodeDecodeError, PermissionError):
+        pass
+PYEOF
+
+unset _NAME _DESC 2>/dev/null || true
+
+# ── Git ───────────────────────────────────────────────────────────────────────
+git init -q
+git add .
+git commit -q -m "feat: initial project scaffold" 2>/dev/null || {
+  echo ""
+  echo "Note: git commit skipped — configure git identity first:"
+  echo "  git config user.name  'Your Name'"
+  echo "  git config user.email 'you@example.com'"
+}
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+echo ""
+echo "✓ $PROJECT_NAME initialised"
+echo ""
+echo "Next:"
+echo "  claude"
+echo "  # Tell Claude Code what you want to build"
