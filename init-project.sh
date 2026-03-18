@@ -51,8 +51,7 @@ chmod +x .agents/fetch-skill.sh
 
 cp skillflow/skill-catalog.md .agents/skill-catalog.md
 cp skillflow/skill-scenarios.md .agents/skill-scenarios.md
-cp skillflow/agents-lite.md .agents/agents-lite.md
-cp skillflow/agents-full.md .agents/agents-full.md
+cp skillflow/agents.md .agents/agents.md
 
 # ── Write AGENTS.md ───────────────────────────────────────────────────────────
 cat > AGENTS.md << 'AGENTSEOF'
@@ -61,14 +60,9 @@ cat > AGENTS.md << 'AGENTSEOF'
 ## What this repo is
 {{PROJECT_DESCRIPTION}}
 
-## Mode Selection
-At the start of each session, ask the human:
-
-**"Full workflow or lite?"**
-- **Lite** — daily dev: 3 skills, TDD, code review, fast. Read `.agents/agents-lite.md` and follow it.
-- **Full** — bigger projects: chain execution, scenario matching, structured summaries, checkpoints. Read `.agents/agents-full.md` and follow it.
-
-If the human doesn't specify, default to **lite**.
+## Workflow
+Read .agents/agents.md and follow it. The workflow adapts to the task:
+quick tasks take a short path, complex tasks use chain execution.
 AGENTSEOF
 
 # ── Write README.md ───────────────────────────────────────────────────────────
