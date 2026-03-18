@@ -130,35 +130,64 @@ Read .agents/skills/writing-plans/SKILL.md.
 Produce a written plan in docs/plan.md before touching any code.
 Wait for human approval before proceeding.
 
-### 4. Implement
-Follow the approved plan. Work in small committed steps.
-Ask before making decisions not covered by the plan.
+### 4. Implement (Chain Execution)
 
-### Checkpoint: Skill Compliance
-Before proceeding to review, complete two checks:
+The plan declares tasks as a chain. Each task specifies a skill, what
+summaries it reads, and what it writes. Execute as a coordinator:
 
-**A. Scenario checkpoint** — run through the specific pass/fail criteria
-from the matched scenario in .agents/skill-scenarios.md:
-
-| Checkpoint Item | Pass/Fail | Evidence |
-|---|---|---|
-| (each item from the scenario) | Pass/Fail | (point to specific output) |
-
-Any "Fail" must be fixed or explicitly approved by the human to skip.
-
-**B. Skill procedure check** — for each fetched skill:
-
-| Skill | Key Procedure | Followed? | Evidence |
-|---|---|---|---|
-| (skill name) | (what it required) | Yes/No | (specific output) |
+For each task in the chain:
+1. Read the task's `reads` summaries (if any)
+2. Fetch the task's assigned skill (if not already fetched)
+3. Dispatch a subagent with ONLY:
+   - The task description from the plan
+   - The assigned skill's SKILL.md content
+   - The relevant SUMMARY files listed in `reads`
+   - The SUMMARY template (see .agents/skill-scenarios.md)
+   - Instructions to write the output files AND a SUMMARY file
+4. Wait for the subagent to complete
+5. Read the SUMMARY file it produced
+6. If the SUMMARY reports issues with previous work:
+   - Show the issues to the human
+   - If approved, re-dispatch the relevant earlier agent with the feedback
+   - Re-run the chain from that point
+7. Proceed to the next task
 
 Rules:
-- "Evidence" must point to concrete output (a file, a section, a specific
-  action taken) — not just "I did it."
-- Any "Fail" or "No" must be fixed or explicitly approved to skip.
-- If more than half the items fail, go back to step 4.
+- The coordinator does NOT do implementation work — only manages handoffs
+- Each subagent gets fresh context — no session history
+- If a task is trivial (< 1 minute of work), the coordinator may do it
+  inline instead of dispatching, but must still write the SUMMARY
 
-Present both tables to the human before proceeding to review.
+### Checkpoint: Skill Compliance
+Before proceeding to review, run the scenario's testable checkpoint
+from .agents/skill-scenarios.md:
+
+**A. Required artifacts** — verify each file exists and contains
+what it should. List each with pass/fail:
+```
+artifact: tests/test_*.py — PASS (7 test functions found)
+artifact: docs/summaries/SUMMARY-01.md — PASS (exists, 34 lines)
+```
+
+**B. Required validations** — run each command, show output:
+```
+validation: python -m pytest tests/ -v — PASS (7 passed)
+validation: SUMMARY-02 contains "red" — PASS (line 8: "red phase")
+```
+
+**C. Forbidden shortcuts** — check each, prove it didn't happen:
+```
+forbidden: code before tests — PASS (git log shows test commit first)
+forbidden: no review summary — PASS (SUMMARY-04.md exists)
+```
+
+Rules:
+- Every check must show concrete evidence (file path, line number,
+  command output) — not just "I did it"
+- Any FAIL must be fixed or explicitly approved by the human to skip
+- If more than half the checks fail, go back to step 4
+
+Present the full checkpoint to the human before proceeding to review.
 
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
