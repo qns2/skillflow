@@ -39,24 +39,65 @@ next: Task 03
 Each subagent must write a SUMMARY file using this format:
 
 ```markdown
-# SUMMARY-NN: [Task Name]
+# SUMMARY-NN
 
-## What was built
-(concrete outputs — file paths, what they contain)
+Task: [what was done]
+Skill: [skill used]
 
-## Key decisions
-(choices made, with reasoning)
+Inputs used:
+- [file or summary read]
+- [skill: skill-name]
 
-## Assumptions
-(anything the next task should validate or build on)
+Outputs created:
+- [file path] — [what it contains]
 
-## Issues for previous tasks
-(if anything needs to change in earlier work — triggers backwards feedback)
-Leave blank if none.
+Key decisions:
+- [decision 1]
+- [decision 2]
 
-## What the next task needs
-(specific context, data points, or constraints for the next agent)
+Constraints:
+- [constraint carried forward or discovered]
+
+Open issues:
+- [anything unresolved — triggers backwards feedback if critical]
+- (leave empty if none)
+
+What next task needs:
+- [specific data points, file references, or context]
 ```
+
+Rules:
+- Every item under "Outputs created" must be a real file path that exists
+- Every item under "Inputs used" must reference a real file or summary
+- "Key decisions" must state the choice AND why
+- "Open issues" that affect the next task must be resolved before proceeding
+
+### Checkpoint Format
+
+Each scenario defines checkpoints as testable criteria with three components:
+
+**Required artifacts** — files that must exist with specific content:
+```
+artifact: tests/test_*.py
+contains: "def test_"
+min_count: 3
+```
+
+**Required validations** — commands that must pass:
+```
+validation: "python -m pytest tests/ -v"
+expect: "passed"
+```
+
+**Forbidden shortcuts** — patterns that indicate skipped procedures:
+```
+forbidden: "implementation committed before tests"
+check: git log shows test commit before implementation commit
+```
+
+The checkpoint is **testable** — the coordinator can verify each item
+by checking files exist, running commands, and inspecting git history.
+Not "did you do it?" but "prove it."
 
 ### Backwards Feedback
 
@@ -198,11 +239,21 @@ Task 05 — Verification
 ```
 
 **Checkpoint:**
-- [ ] Plan written and approved before any code?
-- [ ] Tests written before implementation code?
-- [ ] Tests watched failing before writing code?
-- [ ] Code review subagent dispatched and issues addressed?
-- [ ] All tests pass with evidence shown?
+
+Required artifacts:
+- `docs/plan.md` — exists, contains task breakdown
+- `tests/` — contains test files with `def test_` functions
+- `docs/summaries/SUMMARY-01.md` through `SUMMARY-05.md` — all exist
+
+Required validations:
+- `python -m pytest tests/ -v` — all tests pass
+- SUMMARY-02 contains "fail" or "red" (proves tests were watched failing)
+- SUMMARY-04 contains review results (proves review was dispatched)
+
+Forbidden shortcuts:
+- Implementation code committed before test code (check git log)
+- SUMMARY-03 written without SUMMARY-02 existing (skipped TDD)
+- No code review summary (skipped review step)
 
 ---
 
@@ -244,11 +295,21 @@ Task 04 — Verification
 ```
 
 **Checkpoint:**
-- [ ] Root cause identified before fix attempted?
-- [ ] Hypothesis stated explicitly?
-- [ ] Regression test written that reproduces the bug?
-- [ ] Fix addresses root cause, not symptom?
-- [ ] All tests pass with evidence shown?
+
+Required artifacts:
+- `docs/summaries/SUMMARY-01.md` — contains "root cause" and "hypothesis"
+- `tests/` — contains regression test
+- `docs/summaries/SUMMARY-01.md` through `SUMMARY-04.md` — all exist
+
+Required validations:
+- `python -m pytest tests/ -v` — all tests pass
+- SUMMARY-01 states hypothesis before any fix is attempted
+- SUMMARY-02 shows regression test reproduces the bug
+
+Forbidden shortcuts:
+- Fix committed without SUMMARY-01 (skipped root cause investigation)
+- No regression test (symptom fix only)
+- Multiple fix attempts without returning to hypothesis (shotgun debugging)
 
 ---
 
@@ -500,12 +561,24 @@ Task 06 — Verification & Reader Testing
 ```
 
 **Checkpoint:**
-- [ ] Market data has source citations?
-- [ ] Competitive landscape researched (not assumed)?
-- [ ] Financial projections include sensitivity analysis (at least one variable)?
-- [ ] Unit economics calculated with stated assumptions?
-- [ ] Document reader-tested by fresh subagent?
-- [ ] All spec requirements verified with evidence?
+
+Required artifacts:
+- `sections/01-value-prop.md` — exists
+- `sections/02-market.md` — contains URLs or source names (citations)
+- `sections/03-financials.md` — contains "sensitivity" or "scenario"
+- `docs/business-plan.md` — assembled final document
+- `docs/summaries/SUMMARY-01.md` through `SUMMARY-06.md` — all exist
+
+Required validations:
+- `grep -c 'http\|Source:' sections/02-market.md` — at least 3 citations
+- `grep -c 'sensitivity\|scenario\|downside\|upside' sections/03-financials.md` — at least 1
+- SUMMARY-06 contains verification results (proves reader testing was done)
+
+Forbidden shortcuts:
+- Market data without source citations (invented numbers)
+- Financial projections without stated assumptions
+- No reader testing summary (skipped doc-coauthoring Stage 3)
+- SUMMARY-03 (financials) written without SUMMARY-02 (market data) existing
 
 ---
 

@@ -183,30 +183,35 @@ Rules:
   inline instead of dispatching, but must still write the SUMMARY
 
 ### Checkpoint: Skill Compliance
-Before proceeding to review, complete two checks:
+Before proceeding to review, run the scenario's testable checkpoint
+from .agents/skill-scenarios.md:
 
-**A. Scenario checkpoint** — run through the specific pass/fail criteria
-from the matched scenario in .agents/skill-scenarios.md:
+**A. Required artifacts** — verify each file exists and contains
+what it should. List each with pass/fail:
+```
+artifact: tests/test_*.py — PASS (7 test functions found)
+artifact: docs/summaries/SUMMARY-01.md — PASS (exists, 34 lines)
+```
 
-| Checkpoint Item | Pass/Fail | Evidence |
-|---|---|---|
-| (each item from the scenario) | Pass/Fail | (point to specific output) |
+**B. Required validations** — run each command, show output:
+```
+validation: python -m pytest tests/ -v — PASS (7 passed)
+validation: SUMMARY-02 contains "red" — PASS (line 8: "red phase")
+```
 
-Any "Fail" must be fixed or explicitly approved by the human to skip.
-
-**B. Skill procedure check** — for each fetched skill:
-
-| Skill | Key Procedure | Followed? | Evidence |
-|---|---|---|---|
-| (skill name) | (what it required) | Yes/No | (specific output) |
+**C. Forbidden shortcuts** — check each, prove it didn't happen:
+```
+forbidden: code before tests — PASS (git log shows test commit first)
+forbidden: no review summary — PASS (SUMMARY-04.md exists)
+```
 
 Rules:
-- "Evidence" must point to concrete output (a file, a section, a specific
-  action taken) — not just "I did it."
-- Any "Fail" or "No" must be fixed or explicitly approved to skip.
-- If more than half the items fail, go back to step 4.
+- Every check must show concrete evidence (file path, line number,
+  command output) — not just "I did it"
+- Any FAIL must be fixed or explicitly approved by the human to skip
+- If more than half the checks fail, go back to step 4
 
-Present both tables to the human before proceeding to review.
+Present the full checkpoint to the human before proceeding to review.
 
 ### 5. Review
 Review all changed code against docs/plan.md and acceptance criteria.
