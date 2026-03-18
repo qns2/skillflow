@@ -70,6 +70,27 @@ my-project/
 
 ---
 
+## Example: Building a feature
+
+You say: "Build an API for tracking inspections."
+
+1. **Boot** — Claude refreshes skill catalog, fetches brainstorming skill
+2. **Brainstorm** — Claude asks questions, you agree on the approach
+3. **Skills** — Claude matches "Feature Development" scenario, fetches TDD, code review, dev-engineering skills, reads each one, shows you the checkpoint criteria
+4. **Plan** — Claude writes the plan as a chain of tasks with skill/reads/writes
+5. **Chain execution** — Claude dispatches one subagent per task sequentially:
+   - Subagent 1 (writing-plans skill) → writes plan → SUMMARY-01
+   - Subagent 2 (TDD skill + SUMMARY-01) → writes tests → SUMMARY-02
+   - Subagent 3 (dev-engineering skill + SUMMARY-01 + SUMMARY-02) → writes code → SUMMARY-03
+   - Subagent 4 (code review skill + SUMMARY-02 + SUMMARY-03) → reviews → SUMMARY-04
+   - Subagent 5 (verification skill + all summaries) → runs tests → SUMMARY-05
+6. **Checkpoint** — Claude shows pass/fail for each checkpoint item with evidence
+7. **Review + Commit**
+
+Each subagent gets fresh context — only its skill and the relevant summaries. The coordinator manages handoffs but does no implementation work.
+
+---
+
 ## Skill sources
 
 Skills are fetched on demand from:

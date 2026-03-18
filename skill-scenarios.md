@@ -68,6 +68,88 @@ If a subagent writes issues in "Issues for previous tasks," the coordinator:
 
 ---
 
+## Example Walkthrough
+
+Here is a complete walkthrough of how chain execution works for a
+Feature Development task ("Build an API for tracking yacht inspections"):
+
+**Step 2 output:** Matched scenario "Feature Development." Skills fetched,
+read, and summarized. Checkpoint criteria listed.
+
+**Step 3 output:** Plan written as a chain:
+
+```
+Task 01 — Plan
+  skill: writing-plans from obra/superpowers
+  reads: (none)
+  writes: docs/plan.md, docs/summaries/SUMMARY-01.md
+  next: Task 02
+
+Task 02 — Tests
+  skill: test-driven-development from obra/superpowers
+  reads: docs/summaries/SUMMARY-01.md
+  writes: tests/, docs/summaries/SUMMARY-02.md
+  next: Task 03
+
+Task 03 — Implementation
+  skill: dev-engineering-super-skill from get-zeked
+  reads: docs/summaries/SUMMARY-01.md, docs/summaries/SUMMARY-02.md
+  writes: src/, docs/summaries/SUMMARY-03.md
+  next: Task 04
+
+Task 04 — Code Review
+  skill: requesting-code-review from obra/superpowers
+  reads: docs/summaries/SUMMARY-02.md, docs/summaries/SUMMARY-03.md
+  writes: docs/summaries/SUMMARY-04.md
+  next: Task 05
+
+Task 05 — Verification
+  skill: verification-before-completion from obra/superpowers
+  reads: all summaries
+  writes: docs/summaries/SUMMARY-05.md
+  next: (done)
+```
+
+**Step 4 execution:** The coordinator dispatches one subagent per task:
+
+1. **Task 01 subagent** gets: task description + writing-plans skill.
+   Writes the detailed plan and SUMMARY-01 (what endpoints, what stack, key decisions).
+
+2. **Task 02 subagent** gets: task description + TDD skill + SUMMARY-01.
+   Writes tests and SUMMARY-02 (8 test cases, response schemas).
+
+3. **Task 03 subagent** gets: task description + dev-engineering skill + SUMMARY-01 + SUMMARY-02.
+   Writes implementation and SUMMARY-03. If it finds issues with earlier work
+   (e.g., "plan didn't mention DELETE endpoint but tests expect it"), it flags
+   them in the SUMMARY's "Issues for previous tasks" section.
+
+4. **Coordinator reads SUMMARY-03,** sees the issue, shows the human.
+   Human approves the forward fix. Chain continues.
+
+5. **Task 04 subagent** gets: review skill + SUMMARY-02 + SUMMARY-03.
+   Reviews code against tests. Writes SUMMARY-04.
+
+6. **Task 05 subagent** gets: verification skill + all summaries.
+   Runs tests, confirms pass. Writes SUMMARY-05 with evidence.
+
+**Checkpoint output:**
+
+| Checkpoint Item | Pass/Fail | Evidence |
+|---|---|---|
+| Plan written and approved? | Pass | docs/plan.md, SUMMARY-01 |
+| Tests written before code? | Pass | Task 02 ran before Task 03 |
+| Tests watched failing? | Pass | SUMMARY-02 confirms red phase |
+| Code review dispatched? | Pass | SUMMARY-04 |
+| All tests pass? | Pass | SUMMARY-05 shows 8/8 pass |
+
+Key points:
+- Each subagent got **fresh context** — only its skill and relevant summaries
+- The coordinator did **no implementation work** — only managed handoffs
+- **Backwards feedback** worked: Task 03 flagged an issue, coordinator showed the human
+- **Evidence is concrete**: file paths, test counts, specific decisions documented
+
+---
+
 ## Code Scenarios
 
 ### Feature Development
