@@ -71,7 +71,7 @@ If a subagent writes issues in "Issues for previous tasks," the coordinator:
 ## Example Walkthrough
 
 Here is a complete walkthrough of how chain execution works for a
-Feature Development task ("Build an API for tracking yacht inspections"):
+Feature Development task ("Build a REST API for a task management app"):
 
 **Step 2 output:** Matched scenario "Feature Development." Skills fetched,
 read, and summarized. Checkpoint criteria listed.

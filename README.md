@@ -72,7 +72,7 @@ my-project/
 
 ## Example: Building a feature
 
-You say: "Build an API for tracking inspections."
+You say: "Build a REST API for a task management app."
 
 1. **Boot** — Claude refreshes skill catalog, fetches brainstorming skill
 2. **Brainstorm** — Claude asks questions, you agree on the approach
