@@ -42,7 +42,7 @@ fi
 read -rp "Project description: " DESCRIPTION
 
 # ── Create structure ──────────────────────────────────────────────────────────
-mkdir -p {src,docs,tests}
+mkdir -p {src,docs,docs/summaries,tests}
 mkdir -p .agents/skills
 
 # ── Copy files from skillflow/ ───────────────────────────────────────────────

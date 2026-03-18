@@ -154,9 +154,33 @@ Read .agents/skills/writing-plans/SKILL.md.
 Produce a written plan in docs/plan.md before touching any code.
 Wait for human approval before proceeding.
 
-### 4. Implement
-Follow the approved plan. Work in small committed steps.
-Ask before making decisions not covered by the plan.
+### 4. Implement (Chain Execution)
+
+The plan declares tasks as a chain. Each task specifies a skill, what
+summaries it reads, and what it writes. Execute as a coordinator:
+
+For each task in the chain:
+1. Read the task's `reads` summaries (if any)
+2. Fetch the task's assigned skill (if not already fetched)
+3. Dispatch a subagent with ONLY:
+   - The task description from the plan
+   - The assigned skill's SKILL.md content
+   - The relevant SUMMARY files listed in `reads`
+   - The SUMMARY template (see .agents/skill-scenarios.md)
+   - Instructions to write the output files AND a SUMMARY file
+4. Wait for the subagent to complete
+5. Read the SUMMARY file it produced
+6. If the SUMMARY reports issues with previous work:
+   - Show the issues to the human
+   - If approved, re-dispatch the relevant earlier agent with the feedback
+   - Re-run the chain from that point
+7. Proceed to the next task
+
+Rules:
+- The coordinator does NOT do implementation work — only manages handoffs
+- Each subagent gets fresh context — no session history
+- If a task is trivial (< 1 minute of work), the coordinator may do it
+  inline instead of dispatching, but must still write the SUMMARY
 
 ### Checkpoint: Skill Compliance
 Before proceeding to review, complete two checks:
