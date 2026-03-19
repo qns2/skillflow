@@ -77,3 +77,16 @@ Fetch with: `bash .agents/fetch-skill.sh <skill-name> get-zeked/<skill-name>`
 | operations-cx-super-skill | Ticket triage, customer responses, escalation workflows, KB management, sprint ops, quality verification. |
 | research-knowledge-super-skill | Deep research workflows, knowledge graphs, content extraction, data exploration, statistical analysis, visualization. |
 | content-creative-super-skill | Video, speech, image generation, web building, canvas design, algorithmic art, brand guidelines, frontend design. |
+
+## Architecture & Planning — mattpocock/skills
+
+| Skill | Description |
+|---|---|
+| design-an-interface | Spawn parallel subagents to generate radically different API/interface designs, then compare. "Design it twice" pattern. |
+| write-a-prd | Create a PRD through user interview, codebase exploration, and module design. Submits as GitHub issue. |
+| prd-to-plan | Turn a PRD into phased implementation using tracer-bullet vertical slices. Saved as local markdown. |
+| improve-codebase-architecture | Explore codebase for architectural improvements. Focus on testability and deepening shallow modules. |
+| request-refactor-plan | Create detailed refactor plan with tiny commits via user interview. Filed as GitHub issue. |
+| git-guardrails-claude-code | Set up Claude Code hooks to block destructive git commands (push, reset --hard, clean, branch -D). |
+| grill-me | Devil's advocate — challenges your assumptions and plans before you commit to them. |
+| ubiquitous-language | Enforce consistent terminology across a codebase. Useful for larger projects with domain language.

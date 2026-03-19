@@ -146,6 +146,7 @@ Skills are fetched on demand from:
 - [anthropics/skills](https://github.com/anthropics/skills) — documents, design, development tools (17 skills)
 - [obra/superpowers](https://github.com/obra/superpowers) — development process, workflow (14 skills)
 - [get-zeked](https://github.com/get-zeked) — cross-domain super-skills: dev, marketing, sales, finance, legal, PM, ops, research, content (10 skills)
+- [mattpocock/skills](https://github.com/mattpocock/skills) — architecture, interface design, PRD-to-plan, refactoring, git guardrails (8 skills)
 
 See `skill-catalog.md` for the full catalog and `skill-scenarios.md` for task-to-skill mappings.
 

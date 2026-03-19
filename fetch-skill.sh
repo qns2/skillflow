@@ -214,6 +214,7 @@ fi
 REPOS=(
   "anthropics/skills"
   "obra/superpowers"
+  "mattpocock/skills"
 )
 
 if [[ -n "$SPECIFIC_REPO" ]]; then
