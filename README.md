@@ -1,6 +1,6 @@
 # skillflow
 
-A skill repository for Claude Code sessions. 49 skills across 4 repos, fetched on demand with safety scanning.
+A skill repository for Claude Code sessions. 90+ skills across 6 repos, fetched on demand with safety scanning.
 
 ## Install
 
@@ -128,6 +128,8 @@ Each scenario defines which skills to fetch, the chain execution order, and spec
 | [obra/superpowers](https://github.com/obra/superpowers) | 14 | Development process, workflow |
 | [get-zeked](https://github.com/get-zeked) | 10 | Cross-domain: finance, legal, marketing, sales, PM |
 | [mattpocock/skills](https://github.com/mattpocock/skills) | 8 | Architecture, PRDs, refactoring, git safety |
+| [trailofbits/skills](https://github.com/trailofbits/skills) | 22 | Security: static analysis, supply chain, smart contracts, binary analysis |
+| [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | 19 | AI agent ops, deep research, video editing, context optimization |
 
 See `skill-catalog.md` for the full list.
 
@@ -144,7 +146,7 @@ Every skill downloaded by `fetch-skill.sh` is automatically scanned before insta
 - **Safety bypass** — instructions to skip code reviews, disable safety checks, or use `--no-verify`
 - **Code injection** — `eval`/`exec` calls
 
-Tested against all 49 upstream skills with zero false positives.
+Tested against all upstream skills with zero false positives.
 
 ---
 

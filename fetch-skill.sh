@@ -215,6 +215,8 @@ REPOS=(
   "anthropics/skills"
   "obra/superpowers"
   "mattpocock/skills"
+  "trailofbits/skills"
+  "affaan-m/everything-claude-code"
 )
 
 if [[ -n "$SPECIFIC_REPO" ]]; then
@@ -229,9 +231,13 @@ for REPO in "${REPOS[@]}"; do
   for SKILL_PATH in \
     "skills/$SKILL_NAME/SKILL.md" \
     "$SKILL_NAME/SKILL.md" \
+    "plugins/$SKILL_NAME/SKILL.md" \
+    "plugins/$SKILL_NAME/skills/$SKILL_NAME/SKILL.md" \
     "SKILL.md" \
     "skills/$SKILL_NAME/skill.md" \
     "$SKILL_NAME/skill.md" \
+    "plugins/$SKILL_NAME/skill.md" \
+    "plugins/$SKILL_NAME/skills/$SKILL_NAME/skill.md" \
     "skill.md"
   do
     DOWNLOAD_URL=""
